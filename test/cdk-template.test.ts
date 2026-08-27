@@ -1,5 +1,6 @@
 import { expect, test } from "bun:test"
 import { App, Stack } from "aws-cdk-lib"
+import { Template } from "aws-cdk-lib/assertions"
 import {
   Code,
   Function as LambdaFunction,
@@ -36,4 +37,28 @@ test("ignoreAssets hides the asset hash so the snapshot is stable", () => {
   expect(
     cdkTemplate(stackWithLambda(), { ignoreAssets: true }),
   ).toMatchSnapshot()
+})
+
+/**
+ * `Template.fromStack` returns the assembly's cached template object rather
+ * than a copy, so normalizing in place would leak into every later assertion
+ * on the same stack.
+ */
+test("leaves the stack synthesizable again after a destructive option", () => {
+  const stack = stackWithLambda()
+
+  cdkTemplate(stack, { subsetResourceTypes: [] })
+
+  expect(Object.keys(cdkTemplate(stack).Resources as object)).toContain(
+    "Bucket83908E77",
+  )
+})
+
+test("leaves the underlying template untouched for other assertions", () => {
+  const stack = stackWithLambda()
+
+  cdkTemplate(stack, { ignoreAssets: true, ignoreMetadata: true })
+
+  Template.fromStack(stack).resourceCountIs("AWS::S3::Bucket", 1)
+  expect(Template.fromStack(stack).toJSON().Parameters).toBeDefined()
 })

@@ -195,3 +195,21 @@ describe("degenerate templates", () => {
     expect(() => normalize(build(), config)).not.toThrow()
   })
 })
+
+test("returns a copy rather than mutating the argument", () => {
+  const original: Template = {
+    Metadata: { "aws:cdk:path": "Stack" },
+    Parameters: { BootstrapVersion: { Type: "String" } },
+    Resources: { Bucket: { Type: "AWS::S3::Bucket", Metadata: { a: 1 } } },
+  }
+  const before = structuredClone(original)
+
+  const result = normalize(original, {
+    ignoreMetadata: true,
+    subsetResourceTypes: [],
+  })
+
+  expect(original).toEqual(before)
+  expect(result).not.toBe(original)
+  expect(result.Resources).toEqual({})
+})

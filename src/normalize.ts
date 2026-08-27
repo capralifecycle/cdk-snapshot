@@ -13,8 +13,10 @@ const matchRegionInAssetRegex = /:(.*)$/
 const maskedVersionSuffix = "x".repeat(32)
 
 /**
- * Applies the configured normalizations to a synthesized template. Mutates and
- * returns `template`.
+ * Returns a copy of `template` with the configured normalizations applied. The
+ * argument is left untouched: `Template.fromStack` hands out the assembly's
+ * cached template object, so mutating it would corrupt every later assertion
+ * on the same stack.
  *
  * Step order is significant: earlier steps can remove structures that later
  * ones inspect.
@@ -35,22 +37,24 @@ export function normalize(
     assetPlaceholder = anyObject,
   } = options
 
-  if (ignoreBootstrapVersion) stripBootstrapVersion(template)
-  if (ignoreAssets) stripAssets(template, assetPlaceholder)
-  if (ignoreCurrentVersion && template.Resources) maskCurrentVersions(template)
-  if (ignorePipelineAssets && template.Resources) maskPipelineAssets(template)
+  const result = structuredClone(template)
+
+  if (ignoreBootstrapVersion) stripBootstrapVersion(result)
+  if (ignoreAssets) stripAssets(result, assetPlaceholder)
+  if (ignoreCurrentVersion) maskCurrentVersions(result)
+  if (ignorePipelineAssets) maskPipelineAssets(result)
   if (subsetResourceTypes) {
-    keepResources(template, (_key, resource) =>
+    keepResources(result, (_key, resource) =>
       subsetResourceTypes.includes(resource?.Type),
     )
   }
   if (subsetResourceKeys) {
-    keepResources(template, (key) => subsetResourceKeys.includes(key))
+    keepResources(result, (key) => subsetResourceKeys.includes(key))
   }
-  if (ignoreMetadata) stripMetadata(template)
-  if (ignoreTags) stripTags(template)
+  if (ignoreMetadata) stripMetadata(result)
+  if (ignoreTags) stripTags(result)
 
-  return template
+  return result
 }
 
 function stripBootstrapVersion(template: Template): void {

@@ -10,11 +10,14 @@ export { anyObject } from "./placeholder.js"
  * Synthesizes `stack` to a CloudFormation template with deployment noise
  * removed, ready to hand to a snapshot assertion.
  *
+ * The stack is left untouched, so it can be synthesized again with different
+ * options.
+ *
  * Bun users should import this from `@liflig/cdk-snapshot/bun` instead.
  */
 export function cdkTemplate(
   stack: Stack,
   options: CdkTemplateOptions = {},
 ): Record<string, unknown> {
-  return normalize(Template.fromStack(stack, {}).toJSON(), options)
+  return normalize(Template.fromStack(stack).toJSON(), options)
 }
