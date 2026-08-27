@@ -1,8 +1,12 @@
 # @liflig/cdk-snapshot
 
+[![npm](https://img.shields.io/npm/v/@liflig/cdk-snapshot.svg)](https://www.npmjs.com/package/@liflig/cdk-snapshot)
+[![ci](https://github.com/capralifecycle/cdk-snapshot/actions/workflows/ci.yml/badge.svg)](https://github.com/capralifecycle/cdk-snapshot/actions/workflows/ci.yml)
+[![license](https://img.shields.io/npm/l/@liflig/cdk-snapshot.svg)](LICENSE)
+
 Normalizes synthesized AWS CDK stacks for snapshot testing by stripping values such as asset hashes, bootstrap parameters, Lambda version suffixes and more, in order to produce more stable and usable snapshot files.
 
-The library provides a generic implementation with a thin adapter per test runner: `node:test`, Bun, Vitest and Jest. Everything is built around one pure function, `cdkTemplate`, which turns a stack into a normalized template object; each adapter wraps that function in whatever the runner's own snapshot assertion looks like. All four produce byte-identical snapshot files, so the same `.snap` files stay valid if a project switches runner.
+The library provides a generic implementation with a thin adapter per test runner: `node:test`, Bun, Vitest and Jest. Everything is built around one pure function, `cdkTemplate`, which turns a stack into a normalized template object; each adapter wraps that function in whatever the runner's own snapshot assertion looks like. All four write the same snapshot bodies — only the file header differs — so the same `.snap` files stay valid if a project switches runner.
 
 ## Install
 
@@ -10,13 +14,15 @@ The library provides a generic implementation with a thin adapter per test runne
 bun add -d @liflig/cdk-snapshot
 ```
 
+`aws-cdk-lib` and `constructs` are peer dependencies. The package is ESM; CommonJS test files can `require()` it on Node 22.12 or later.
+
 ## Usage
 
-Import the entry point for your runner. Jest, Vitest and Bun get a `toMatchCdkSnapshot` matcher; `node:test` as has no `expect` as of time of writing, so it calls `cdkTemplate` directly.
+Import the entry point for your runner. Jest, Vitest and Bun get a `toMatchCdkSnapshot` matcher; `node:test` has no `expect` at the time of writing, so it calls `cdkTemplate` directly.
 
 ### node:test
 
-`configureCdkSnapshots()` points `node:test` at `__snapshots__/*.snap` and the shared serializer. Call it once, before any test runs.
+`configureCdkSnapshots()` points `node:test` at `__snapshots__/*.snap` and the shared serializer. Call it once, before any test runs. It replaces the default serializer for _every_ snapshot in the run, not just CDK ones, so snapshots taken elsewhere in the same project will be reformatted.
 
 ```js
 import test from "node:test";
@@ -63,27 +69,40 @@ test("my stack", () => {
 });
 ```
 
-Every entry point also exports `cdkTemplate(stack, options)`. Reach for it to assert on the template without a snapshot, or to pass property matchers: `expect(cdkTemplate(stack)).toMatchSnapshot({ ... })`.
+The Jest entry point uses the global `expect`, so it throws on import if Jest is configured with `injectGlobals: false`.
+
+Every entry point also exports `cdkTemplate(stack, options)`. Reach for it to assert on the template without a snapshot, or to pass property matchers: `expect(cdkTemplate(stack)).toMatchSnapshot({ ... })`. It leaves the stack untouched, so one stack can be synthesized repeatedly with different options.
+
+`toMatchCdkSnapshot` cannot be negated; `.not` throws rather than silently passing.
 
 ## Options
 
-| Option                   | Default | Effect                                                                            |
-| ------------------------ | ------- | --------------------------------------------------------------------------------- |
-| `ignoreAssets`           | `false` | Replaces Lambda `Code`, container `Image` and asset parameters with `Any<Object>` |
-| `ignoreBootstrapVersion` | `true`  | Drops the `BootstrapVersion` parameter and its check rule                         |
-| `ignoreCurrentVersion`   | `false` | Masks the content hash on Lambda `CurrentVersion` logical IDs                     |
-| `ignoreMetadata`         | `false` | Drops template and resource `Metadata`                                            |
-| `ignoreTags`             | `false` | Drops `Tags` from resource properties                                             |
-| `ignorePipelineAssets`   | `false` | Masks asset paths and IDs in CDK Pipelines `cdk-assets` commands                  |
-| `subsetResourceTypes`    | —       | Keeps only resources of these CloudFormation types                                |
-| `subsetResourceKeys`     | —       | Keeps only resources with these logical IDs                                       |
+| Option                   | Default       | Effect                                                                              |
+| ------------------------ | ------------- | ----------------------------------------------------------------------------------- |
+| `ignoreAssets`           | `false`       | Replaces Lambda `Code`, container `Image` and the whole `Parameters` block with `Any<Object>` |
+| `ignoreBootstrapVersion` | `true`        | Drops the `BootstrapVersion` parameter and its check rule                            |
+| `ignoreCurrentVersion`   | `false`       | Masks the content hash on Lambda `CurrentVersion` logical IDs                        |
+| `ignoreMetadata`         | `false`       | Drops template and resource `Metadata`                                               |
+| `ignoreTags`             | `false`       | Drops `Tags` from resource properties                                                |
+| `ignorePipelineAssets`   | `false`       | Masks asset paths and IDs in CDK Pipelines `cdk-assets` commands                     |
+| `subsetResourceTypes`    | —             | Keeps only resources of these CloudFormation types                                   |
+| `subsetResourceKeys`     | —             | Keeps only resources with these logical IDs                                          |
+| `assetPlaceholder`       | `anyObject`   | Token substituted for asset-derived values                                           |
+
+`subsetResourceTypes` and `subsetResourceKeys` intersect: given both, a resource is kept only if it matches both.
+
+`ignoreAssets` replaces the entire `Parameters` block rather than the individual asset parameters, matching what jest-cdk-snapshot does.
+
+`anyObject` is exported from the package root. It is an asymmetric matcher that serializes as `Any<Object>` and matches any non-null object. The Bun entry point substitutes `expect.any(Object)` instead, because Bun's serializer only recognizes matchers built by its own `expect`.
 
 ## Development
 
 ```sh
-make build   # format, refresh snapshots, build
-make ci      # same as build, but fail on diff in snapshots, lockfiles etc
+make build   # install, format, typecheck, refresh snapshots, test
+make ci      # what the CI workflow runs: refuses a stale lockfile, fails on an uncommitted snapshot change
 ```
+
+`make snapshots` regenerates the unit snapshots plus the shared fixture under all four runners, which `test/compat.test.ts` then compares against each other.
 
 ## Migrating from jest-cdk-snapshot
 
@@ -93,3 +112,7 @@ Change the import. Call sites and `.snap` files stay as they are, since the opti
 -import "jest-cdk-snapshot"
 +import "@liflig/cdk-snapshot/jest"
 ```
+
+## License
+
+MIT, see [LICENSE](LICENSE).
