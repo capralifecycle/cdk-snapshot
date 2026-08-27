@@ -28,6 +28,17 @@ exports[`parity 1`] = `
       },
       "Type": "AWS::Lambda::Function",
     },
+    "FnCurrentVersion17A89ABBxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx": {
+      "Metadata": {
+        "aws:cdk:do-not-refactor": true,
+      },
+      "Properties": {
+        "FunctionName": {
+          "Ref": "Fn9270CBC0",
+        },
+      },
+      "Type": "AWS::Lambda::Version",
+    },
     "FnServiceRoleB9001A96": {
       "Properties": {
         "AssumeRolePolicyDocument": {

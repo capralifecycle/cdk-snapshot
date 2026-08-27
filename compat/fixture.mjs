@@ -16,11 +16,14 @@ export function fixtureStack() {
     env: { account: "112233445566", region: "eu-west-1" },
   })
   new Bucket(stack, "Bucket", { bucketName: "parity-bucket" })
-  new LambdaFunction(stack, "Fn", {
+  const fn = new LambdaFunction(stack, "Fn", {
     runtime: Runtime.NODEJS_22_X,
     handler: "index.handler",
     code: Code.fromAsset(assetPath),
   })
+  // Emits a version whose logical ID carries a content hash, so the fixture
+  // exercises both maskings and survives a CDK upgrade.
+  fn.currentVersion
   return stack
 }
 
