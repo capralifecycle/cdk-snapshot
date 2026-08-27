@@ -1,0 +1,74 @@
+{
+  "name": "@liflig/cdk-snapshot",
+  "version": "0.0.0-development",
+  "description": "Normalizes synthesized AWS CDK stacks for snapshot testing",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.3.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/capralifecycle/cdk-snapshot.git"
+  },
+  "keywords": [
+    "aws",
+    "cdk",
+    "cloudformation",
+    "snapshot",
+    "testing"
+  ],
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "import": "./lib/index.js"
+    },
+    "./bun": {
+      "types": "./lib/bun.d.ts",
+      "import": "./lib/bun.js"
+    },
+    "./jest": {
+      "types": "./lib/jest.d.ts",
+      "import": "./lib/jest.js"
+    },
+    "./node": {
+      "types": "./lib/node.d.ts",
+      "import": "./lib/node.js"
+    },
+    "./vitest": {
+      "types": "./lib/vitest.d.ts",
+      "import": "./lib/vitest.js"
+    }
+  },
+  "files": [
+    "lib/**/*"
+  ],
+  "scripts": {
+    "build": "bun run build.ts && tsc",
+    "test": "bun test ./test",
+    "snapshots": "bun test ./test --update-snapshots",
+    "typecheck": "tsc -p tsconfig.check.json",
+    "check": "biome ci && bun run typecheck",
+    "fix": "biome check --write"
+  },
+  "peerDependencies": {
+    "aws-cdk-lib": "^2.0.0",
+    "constructs": "^10.0.0"
+  },
+  "dependencies": {
+    "pretty-format": "^29.7.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.10",
+    "@types/bun": "1.4.0",
+    "@types/jest": "30.0.0",
+    "@types/node": "24.13.3",
+    "aws-cdk-lib": "2.266.0",
+    "constructs": "10.8.1",
+    "typescript": "7.0.2",
+    "vitest": "4.1.11"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
