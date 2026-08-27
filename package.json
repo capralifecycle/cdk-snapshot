@@ -54,7 +54,8 @@
     "snapshots": "bun test ./test --update-snapshots",
     "typecheck": "tsc -p tsconfig.check.json",
     "check": "biome ci && bun run typecheck",
-    "fix": "biome check --write"
+    "fix": "biome check --write",
+    "semantic-release": "semantic-release"
   },
   "peerDependencies": {
     "aws-cdk-lib": "^2.0.0",
@@ -71,6 +72,7 @@
     "aws-cdk-lib": "2.266.0",
     "constructs": "10.8.1",
     "jest": "30.4.2",
+    "semantic-release": "25.0.9",
     "typescript": "7.0.2",
     "vitest": "4.1.11"
   },

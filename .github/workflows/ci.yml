@@ -2,20 +2,43 @@ name: ci
 
 on:
   push:
-    branches: [master]
+    branches: [master, main]
   pull_request:
+
+defaults:
+  run:
+    # Stricter than the default GitHub Actions shell options.
+    shell: bash --noprofile --norc -euo pipefail {0}
+
+concurrency: ci-${{ github.ref }}-${{ github.workflow }}
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # semantic-release pushes tags and a release
+      issues: write
+      pull-requests: write
+      id-token: write # npm publish with provenance
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          fetch-depth: 0 # semantic-release reads the tag history
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
         with:
           bun-version-file: ".bun-version"
 
-      # The snapshot matrix runs the same fixture under node:test.
+      # The snapshot matrix runs the same fixture under node:test, and
+      # semantic-release runs on Node.
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version-file: ".node-version"
+          registry-url: "https://registry.npmjs.org"
+
       - run: make ci
+
+      - name: release
+        if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bun run semantic-release

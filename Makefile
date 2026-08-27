@@ -3,10 +3,10 @@
 .PHONY: build
 build: install fix typecheck snapshots test
 
-# What the CI workflow runs. Regenerates the same snapshots, then fails if that
-# produced a change nobody committed.
+# What the CI workflow runs. Refuses a stale lockfile, regenerates the same
+# snapshots, then fails if that produced a change nobody committed.
 .PHONY: ci
-ci: install check snapshots test snapshots-check
+ci: install-frozen check snapshots test snapshots-check
 
 .PHONY: all
 all: build
@@ -14,6 +14,10 @@ all: build
 .PHONY: install
 install:
 	bun install
+
+.PHONY: install-frozen
+install-frozen:
+	bun install --frozen-lockfile
 
 .PHONY: fix
 fix:
