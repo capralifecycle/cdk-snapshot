@@ -14,3 +14,9 @@ exports[`registers itself on the runner's expect 1`] = `
   },
 }
 `;
+
+exports[`property matchers reach the runner's own snapshot assertion 1`] = `
+{
+  "Resources": Any<Object>,
+}
+`;
