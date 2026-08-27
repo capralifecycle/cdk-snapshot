@@ -4,6 +4,7 @@
   "description": "Normalizes synthesized AWS CDK stacks for snapshot testing",
   "type": "module",
   "license": "MIT",
+  "author": "Liflig",
   "engines": {
     "node": ">=22.12.0"
   },
@@ -11,13 +12,24 @@
     "type": "git",
     "url": "git+https://github.com/capralifecycle/cdk-snapshot.git"
   },
+  "homepage": "https://github.com/capralifecycle/cdk-snapshot#readme",
+  "bugs": {
+    "url": "https://github.com/capralifecycle/cdk-snapshot/issues"
+  },
   "keywords": [
     "aws",
     "cdk",
     "cloudformation",
     "snapshot",
-    "testing"
+    "snapshot-testing",
+    "testing",
+    "jest",
+    "vitest",
+    "bun",
+    "node-test"
   ],
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
   "exports": {
     ".": {
       "types": "./lib/index.d.ts",
@@ -43,7 +55,8 @@
       "types": "./lib/vitest.d.ts",
       "import": "./lib/vitest.js",
       "default": "./lib/vitest.js"
-    }
+    },
+    "./package.json": "./package.json"
   },
   "files": [
     "lib/**/*"
@@ -59,7 +72,13 @@
   },
   "peerDependencies": {
     "aws-cdk-lib": "^2.0.0",
-    "constructs": "^10.0.0"
+    "constructs": "^10.0.0",
+    "vitest": ">=4"
+  },
+  "peerDependenciesMeta": {
+    "vitest": {
+      "optional": true
+    }
   },
   "dependencies": {
     "pretty-format": "^29.7.0"
@@ -77,6 +96,7 @@
     "vitest": "4.1.11"
   },
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "provenance": true
   }
 }

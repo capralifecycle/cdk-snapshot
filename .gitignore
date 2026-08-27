@@ -1,6 +1,4 @@
 node_modules
 lib
-dist
 *.tgz
 cdk.out
-verify/__snapshots__
