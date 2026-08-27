@@ -2,7 +2,7 @@
 
 Normalizes synthesized AWS CDK stacks for snapshot testing by stripping values such as asset hashes, bootstrap parameters, Lambda version suffixes and more, in order to produce more stable and usable snapshot files.
 
-It is a generic implementation with a thin adapter per test runner: `node:test`, Bun, Vitest and Jest. Everything is built around one pure function, `cdkTemplate`, which turns a stack into a normalized template object; each adapter wraps that function in whatever the runner's own snapshot assertion looks like. All four produce byte-identical snapshot files, so the same `.snap` files stay valid if a project switches runner.
+The library provides a generic implementation with a thin adapter per test runner: `node:test`, Bun, Vitest and Jest. Everything is built around one pure function, `cdkTemplate`, which turns a stack into a normalized template object; each adapter wraps that function in whatever the runner's own snapshot assertion looks like. All four produce byte-identical snapshot files, so the same `.snap` files stay valid if a project switches runner.
 
 ## Install
 
