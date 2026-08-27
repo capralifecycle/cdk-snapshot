@@ -42,3 +42,18 @@ test("indents nested structures by two spaces", () => {
 test("orders keys so unrelated reordering cannot churn a snapshot", () => {
   expect(serialize({ b: 1, a: 2 })).toBe(serialize({ a: 2, b: 1 }))
 })
+
+/** `anyObject` stands in for asset values in `toEqual` as well as snapshots. */
+const matches: [label: string, actual: unknown, expected: boolean][] = [
+  ["an object", { S3Key: "abc.zip" }, true],
+  ["an array", [], true],
+  ["null", null, false],
+  ["a string", "abc.zip", false],
+  ["undefined", undefined, false],
+]
+
+test.each(matches)("anyObject matches %s: %p", (_label, actual, expected) => {
+  const matcher = anyObject as { asymmetricMatch: (v: unknown) => boolean }
+
+  expect(matcher.asymmetricMatch(actual)).toBe(expected)
+})
