@@ -1,5 +1,5 @@
 import { cdkTemplate } from "./index.js"
-import { globalExpect, registerCdkMatcher } from "./matcher.js"
+import { registerCdkMatcher, requireExpect } from "./matcher.js"
 import type { CdkTemplateOptions } from "./options.js"
 
 export { cdkTemplate } from "./index.js"
@@ -15,4 +15,7 @@ declare global {
   }
 }
 
-registerCdkMatcher(globalExpect("Jest"), cdkTemplate)
+registerCdkMatcher(
+  requireExpect("Jest", (globalThis as { expect?: unknown }).expect),
+  cdkTemplate,
+)

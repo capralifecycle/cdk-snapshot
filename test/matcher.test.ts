@@ -2,7 +2,11 @@ import { expect, test } from "bun:test"
 import { App, Stack } from "aws-cdk-lib"
 import { Bucket } from "aws-cdk-lib/aws-s3"
 import { cdkTemplate } from "../src/bun.js"
-import { type ExpectLike, registerCdkMatcher } from "../src/matcher.js"
+import {
+  type ExpectLike,
+  registerCdkMatcher,
+  requireExpect,
+} from "../src/matcher.js"
 import type { CdkTemplateOptions } from "../src/options.js"
 import "../src/bun.js"
 
@@ -71,5 +75,28 @@ test("registers itself on the runner's expect", () => {
 test("negating the matcher is refused", () => {
   expect(() => expect(stack()).not.toMatchCdkSnapshot()).toThrow(
     "cannot be negated",
+  )
+})
+
+const rejected: [label: string, injected: unknown][] = [
+  ["nothing", undefined],
+  ["a non-extendable expect", () => undefined],
+  ["a non-function extend", { extend: "no" }],
+]
+
+test.each(rejected)(
+  "explains what to do when the runner injected %s",
+  (_label, injected) => {
+    expect(() => requireExpect("Jest", injected)).toThrow(
+      "Jest did not inject a global `expect`",
+    )
+  },
+)
+
+test("accepts an expect that can be extended", () => {
+  const injected = Object.assign(() => undefined, { extend: () => undefined })
+
+  expect(requireExpect("Jest", injected)).toBe(
+    injected as unknown as ExpectLike,
   )
 })

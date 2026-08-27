@@ -46,13 +46,16 @@ export function registerCdkMatcher(
   })
 }
 
-/** Returns the `expect` a runner injects as a global. */
-export function globalExpect(runner: string): ExpectLike {
-  const injected = (globalThis as { expect?: ExpectLike }).expect
-  if (typeof injected?.extend !== "function") {
+/**
+ * Narrows the `expect` a runner injected to the shape the matcher needs, or
+ * explains what to do when the runner injected nothing.
+ */
+export function requireExpect(runner: string, injected: unknown): ExpectLike {
+  const candidate = injected as ExpectLike | undefined
+  if (typeof candidate?.extend !== "function") {
     throw new Error(
       `@liflig/cdk-snapshot: ${runner} did not inject a global \`expect\`. Enable global injection, or use cdkTemplate() directly.`,
     )
   }
-  return injected
+  return candidate
 }
