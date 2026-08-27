@@ -44,7 +44,7 @@
     "lib/**/*"
   ],
   "scripts": {
-    "build": "bun run build.ts && tsc",
+    "build": "tsc",
     "test": "bun test ./test",
     "snapshots": "bun test ./test --update-snapshots",
     "typecheck": "tsc -p tsconfig.check.json",

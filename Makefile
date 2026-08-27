@@ -31,14 +31,14 @@ typecheck:
 test:
 	bun run test
 
-.PHONY: bun-build
-bun-build:
+.PHONY: compile
+compile:
 	bun run build
 
 # Regenerates the unit snapshots, then the same stack under every supported
 # runner so that test/compat.test.ts can compare what they produced.
 .PHONY: snapshots
-snapshots: bun-build
+snapshots: compile
 	bun test compat/bun.test.mjs --update-snapshots
 	NODE_OPTIONS=--experimental-vm-modules bunx jest -c compat/jest.config.mjs -u
 	bunx vitest run --update --config compat/vitest.config.mjs
