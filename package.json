@@ -5,7 +5,7 @@
   "type": "module",
   "license": "MIT",
   "engines": {
-    "node": ">=22.3.0"
+    "node": ">=22.12.0"
   },
   "repository": {
     "type": "git",
@@ -21,23 +21,28 @@
   "exports": {
     ".": {
       "types": "./lib/index.d.ts",
-      "import": "./lib/index.js"
+      "import": "./lib/index.js",
+      "default": "./lib/index.js"
     },
     "./bun": {
       "types": "./lib/bun.d.ts",
-      "import": "./lib/bun.js"
+      "import": "./lib/bun.js",
+      "default": "./lib/bun.js"
     },
     "./jest": {
       "types": "./lib/jest.d.ts",
-      "import": "./lib/jest.js"
+      "import": "./lib/jest.js",
+      "default": "./lib/jest.js"
     },
     "./node": {
       "types": "./lib/node.d.ts",
-      "import": "./lib/node.js"
+      "import": "./lib/node.js",
+      "default": "./lib/node.js"
     },
     "./vitest": {
       "types": "./lib/vitest.d.ts",
-      "import": "./lib/vitest.js"
+      "import": "./lib/vitest.js",
+      "default": "./lib/vitest.js"
     }
   },
   "files": [
