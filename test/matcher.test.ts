@@ -7,7 +7,8 @@ import {
   registerCdkMatcher,
   requireExpect,
 } from "../src/matcher.js"
-import type { CdkTemplateOptions } from "../src/options.js"
+import type { CdkSnapshotOptions } from "../src/options.js"
+import { anyObject } from "../src/placeholder.js"
 import "../src/bun.js"
 
 function stack(): Stack {
@@ -19,7 +20,7 @@ function stack(): Stack {
   return scope
 }
 
-type Matcher = (received: Stack, options?: CdkTemplateOptions) => unknown
+type Matcher = (received: Stack, options?: CdkSnapshotOptions) => unknown
 
 /**
  * Drives the matcher through a stand-in `expect` to capture the value it hands
@@ -27,15 +28,24 @@ type Matcher = (received: Stack, options?: CdkTemplateOptions) => unknown
  */
 function captureSnapshotArgument(
   received: Stack,
-  options?: CdkTemplateOptions,
+  options?: CdkSnapshotOptions,
 ): unknown {
+  return captureSnapshotCall(received, options).value
+}
+
+function captureSnapshotCall(
+  received: Stack,
+  options?: CdkSnapshotOptions,
+): { value: unknown; propertyMatchers: unknown } {
   let captured: unknown
+  let propertyMatchers: unknown
   let matcher: Matcher | undefined
 
   const fakeExpect = Object.assign(
     (actual: unknown) => ({
-      toMatchSnapshot: () => {
+      toMatchSnapshot: (matchers?: Record<string, unknown>) => {
         captured = actual
+        propertyMatchers = matchers
       },
     }),
     {
@@ -47,7 +57,7 @@ function captureSnapshotArgument(
 
   registerCdkMatcher(fakeExpect, cdkTemplate)
   matcher?.call({}, received, options)
-  return captured
+  return { value: captured, propertyMatchers }
 }
 
 test("snapshots exactly what cdkTemplate returns", () => {
@@ -99,4 +109,40 @@ test("accepts an expect that can be extended", () => {
   expect(requireExpect("Jest", injected)).toBe(
     injected as unknown as ExpectLike,
   )
+})
+
+/**
+ * jest-cdk-snapshot forwards propertyMatchers to the snapshot assertion, and a
+ * project migrating from it keeps working only if these arrive there too - the
+ * documented workaround of snapshotting cdkTemplate() by hand would change the
+ * snapshot key.
+ */
+test("forwards property matchers to the snapshot assertion", () => {
+  const propertyMatchers = { Resources: anyObject }
+
+  const call = captureSnapshotCall(stack(), {
+    subsetResourceTypes: ["AWS::S3::Bucket"],
+    propertyMatchers,
+  })
+
+  expect(call.propertyMatchers).toBe(propertyMatchers)
+})
+
+test("omits property matchers entirely when none were given", () => {
+  expect(captureSnapshotCall(stack(), {}).propertyMatchers).toBeUndefined()
+})
+
+test("keeps property matchers out of the normalized template", () => {
+  const call = captureSnapshotCall(stack(), {
+    propertyMatchers: { Resources: anyObject },
+  })
+
+  expect(call.value).toEqual(cdkTemplate(stack()))
+})
+
+test("property matchers reach the runner's own snapshot assertion", () => {
+  expect(stack()).toMatchCdkSnapshot({
+    subsetResourceTypes: ["AWS::S3::Bucket"],
+    propertyMatchers: { Resources: expect.any(Object) },
+  })
 })

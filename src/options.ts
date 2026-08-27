@@ -27,3 +27,12 @@ export interface CdkTemplateOptions {
    */
   assetPlaceholder?: unknown
 }
+
+/** {@link CdkTemplateOptions} plus what only the snapshot matcher can apply. */
+export interface CdkSnapshotOptions extends CdkTemplateOptions {
+  /**
+   * Property matchers handed to the runner's snapshot assertion, for values
+   * the normalizations do not cover.
+   */
+  propertyMatchers?: Record<string, unknown>
+}

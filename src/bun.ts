@@ -2,13 +2,13 @@ import { expect } from "bun:test"
 import type { Stack } from "aws-cdk-lib"
 import { cdkTemplate as cdkTemplateCore } from "./index.js"
 import { type ExpectLike, registerCdkMatcher } from "./matcher.js"
-import type { CdkTemplateOptions } from "./options.js"
+import type { CdkSnapshotOptions, CdkTemplateOptions } from "./options.js"
 
-export type { CdkTemplateOptions } from "./options.js"
+export type { CdkSnapshotOptions, CdkTemplateOptions } from "./options.js"
 
 declare module "bun:test" {
   interface Matchers<T> {
-    toMatchCdkSnapshot(options?: CdkTemplateOptions): T
+    toMatchCdkSnapshot(options?: CdkSnapshotOptions): T
   }
 }
 

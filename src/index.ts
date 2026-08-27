@@ -3,7 +3,7 @@ import { Template } from "aws-cdk-lib/assertions"
 import { normalize } from "./normalize.js"
 import type { CdkTemplateOptions } from "./options.js"
 
-export type { CdkTemplateOptions } from "./options.js"
+export type { CdkSnapshotOptions, CdkTemplateOptions } from "./options.js"
 export { anyObject } from "./placeholder.js"
 
 /**

@@ -1,16 +1,16 @@
 import { cdkTemplate } from "./index.js"
 import { registerCdkMatcher, requireExpect } from "./matcher.js"
-import type { CdkTemplateOptions } from "./options.js"
+import type { CdkSnapshotOptions } from "./options.js"
 
 export { cdkTemplate } from "./index.js"
-export type { CdkTemplateOptions } from "./options.js"
+export type { CdkSnapshotOptions, CdkTemplateOptions } from "./options.js"
 
 declare global {
   namespace jest {
     // Type parameters must match the upstream declaration exactly.
     // biome-ignore lint/complexity/noBannedTypes: mirrors @types/jest
     interface Matchers<R, T = {}> {
-      toMatchCdkSnapshot(options?: CdkTemplateOptions): R
+      toMatchCdkSnapshot(options?: CdkSnapshotOptions): R
     }
   }
 }

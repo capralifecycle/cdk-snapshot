@@ -3,7 +3,7 @@ import { snapshot } from "node:test"
 import { serialize } from "./serialize.js"
 
 export { cdkTemplate } from "./index.js"
-export type { CdkTemplateOptions } from "./options.js"
+export type { CdkSnapshotOptions, CdkTemplateOptions } from "./options.js"
 
 /**
  * Aligns `node:test` with the snapshot location and serialization the other

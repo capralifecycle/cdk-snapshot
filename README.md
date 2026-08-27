@@ -71,7 +71,15 @@ test("my stack", () => {
 
 The Jest entry point uses the global `expect`, so it throws on import if Jest is configured with `injectGlobals: false`.
 
-Every entry point also exports `cdkTemplate(stack, options)`. Reach for it to assert on the template without a snapshot, or to pass property matchers: `expect(cdkTemplate(stack)).toMatchSnapshot({ ... })`. It leaves the stack untouched, so one stack can be synthesized repeatedly with different options.
+The matcher also accepts `propertyMatchers`, forwarded to the runner's own snapshot assertion for values the normalizations do not cover:
+
+```js
+expect(stack).toMatchCdkSnapshot({
+  propertyMatchers: { Resources: expect.any(Object) },
+});
+```
+
+Every entry point also exports `cdkTemplate(stack, options)`. Reach for it to assert on the template without a snapshot. It leaves the stack untouched, so one stack can be synthesized repeatedly with different options.
 
 `toMatchCdkSnapshot` cannot be negated; `.not` throws rather than silently passing.
 
@@ -88,6 +96,7 @@ Every entry point also exports `cdkTemplate(stack, options)`. Reach for it to as
 | `subsetResourceTypes`    | —             | Keeps only resources of these CloudFormation types                                   |
 | `subsetResourceKeys`     | —             | Keeps only resources with these logical IDs                                          |
 | `assetPlaceholder`       | `anyObject`   | Token substituted for asset-derived values                                           |
+| `propertyMatchers`       | —             | Matchers forwarded to the runner's snapshot assertion (matcher only)                 |
 
 `subsetResourceTypes` and `subsetResourceKeys` intersect: given both, a resource is kept only if it matches both.
 
@@ -112,6 +121,10 @@ Change the import. Call sites and `.snap` files stay as they are, since the opti
 -import "jest-cdk-snapshot"
 +import "@liflig/cdk-snapshot/jest"
 ```
+
+Verified against liflig-cdk (64 snapshots) and cdk-cloudfront-auth: every snapshot passes under `jest --ci`, and a forced `--updateSnapshot` rewrites nothing.
+
+Two of its options are gone. `yaml` is not supported, so a project snapshotting YAML has to regenerate as JSON. The no-op synthesis options it inherited from `StageSynthesisOptions` — `skipValidation`, `validateOnSynthesis`, `force` — are rejected by the type checker instead of warned about at runtime; delete them.
 
 ## License
 

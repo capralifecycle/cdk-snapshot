@@ -1,5 +1,5 @@
 import type { Stack } from "aws-cdk-lib"
-import type { CdkTemplateOptions } from "./options.js"
+import type { CdkSnapshotOptions, CdkTemplateOptions } from "./options.js"
 
 interface MatcherContext {
   isNot?: boolean
@@ -12,7 +12,11 @@ interface MatcherResult {
 
 /** The part of a runner's `expect` this matcher relies on. */
 export interface ExpectLike {
-  (actual: unknown): { toMatchSnapshot(): void }
+  (
+    actual: unknown,
+  ): {
+    toMatchSnapshot(propertyMatchers?: Record<string, unknown>): void
+  }
   extend(matchers: Record<string, unknown>): void
 }
 
@@ -35,12 +39,18 @@ export function registerCdkMatcher(
     toMatchCdkSnapshot(
       this: MatcherContext,
       received: Stack,
-      options: CdkTemplateOptions = {},
+      options: CdkSnapshotOptions = {},
     ): MatcherResult {
       if (this?.isNot) {
         throw new Error("toMatchCdkSnapshot cannot be negated with `.not`.")
       }
-      expect(cdkTemplate(received, options)).toMatchSnapshot()
+      const { propertyMatchers, ...templateOptions } = options
+      const assertion = expect(cdkTemplate(received, templateOptions))
+      if (propertyMatchers) {
+        assertion.toMatchSnapshot(propertyMatchers)
+      } else {
+        assertion.toMatchSnapshot()
+      }
       return { pass: true, message: () => "" }
     },
   })
