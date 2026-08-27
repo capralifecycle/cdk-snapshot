@@ -1,10 +1,12 @@
-# Local build: formats, refreshes snapshots, and leaves the tree ready to commit.
+# Local build: formats, regenerates snapshots, and leaves the tree ready to
+# commit.
 .PHONY: build
-build: install fix typecheck snapshots bun-build
+build: install fix typecheck snapshots test
 
-# What the CI workflow runs: verifies rather than rewrites.
+# What the CI workflow runs. Regenerates the same snapshots, then fails if that
+# produced a change nobody committed.
 .PHONY: ci
-ci: install check test bun-build
+ci: install check snapshots test snapshots-check
 
 .PHONY: all
 all: build
@@ -29,13 +31,24 @@ typecheck:
 test:
 	bun run test
 
-.PHONY: snapshots
-snapshots:
-	bun run snapshots
-
 .PHONY: bun-build
 bun-build:
 	bun run build
+
+# Regenerates the unit snapshots, then the same stack under every supported
+# runner so that test/compat.test.ts can compare what they produced.
+.PHONY: snapshots
+snapshots: bun-build
+	bun test compat/bun.test.mjs --update-snapshots
+	NODE_OPTIONS=--experimental-vm-modules bunx jest -c compat/jest.config.mjs -u
+	bunx vitest run --update --config compat/vitest.config.mjs
+	node --test --test-update-snapshots compat/node.test.mjs
+	bun run snapshots
+
+.PHONY: snapshots-check
+snapshots-check: snapshots
+	git add --intent-to-add ':(glob)**/__snapshots__/**'
+	git diff --exit-code ':(glob)**/__snapshots__/**'
 
 .PHONY: clean
 clean:
