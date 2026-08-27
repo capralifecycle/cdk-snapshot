@@ -120,6 +120,21 @@ describe("pipeline asset masking", () => {
     expect(template.Resources.Step.Commands[0]).toBe(expected)
   })
 
+  test("keeps dollar sequences in the captured text literal", () => {
+    const template = normalize(
+      {
+        Resources: {
+          Step: { Commands: [command("assembly-$&Pipeline", "abc:$`region")] },
+        },
+      },
+      { ignorePipelineAssets: true },
+    )
+
+    expect(template.Resources.Step.Commands[0]).toBe(
+      'cdk-assets --path "<assembly-$&Pipeline>" --verbose publish "$`region"',
+    )
+  })
+
   test("masks every command in a single string", () => {
     const input = `${command("assembly-A", "a:eu-west-1")} && ${command("assembly-B", "b:eu-north-1")}`
 

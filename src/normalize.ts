@@ -8,7 +8,7 @@ export type Template = Record<string, any>
 const currentVersionRegex = /^(.+CurrentVersion[0-9A-F]{8})[0-9a-f]{32}$/
 const pipelineCdkAssetsRegex =
   /cdk-assets\s+--path\s+\\"([^\\/]+)\/.+?assets\.json\\"\s+--verbose\s+publish\s+\\"(.+?)\\"/g
-const matchRegionInAssetRegex = /:(.*)$/
+const assetDestinationRegex = /:(.*)$/
 
 const maskedVersionSuffix = "x".repeat(32)
 
@@ -96,19 +96,21 @@ function maskCurrentVersions(tree: unknown): void {
   })
 }
 
+/**
+ * `cdk-assets ... publish "<hash>:<destination>"` — the hash changes on every
+ * synth, the destination does not.
+ */
 function maskPipelineAssets(tree: unknown): void {
-  transformStrings(tree, (value) => {
-    let result = value
-    for (const match of value.matchAll(pipelineCdkAssetsRegex)) {
-      const region = matchRegionInAssetRegex.exec(match[2] ?? "")
-      const assetId = region?.[1] ? region[1] : "<ASSET_ID>"
-      result = result.replace(
-        match[0],
-        `cdk-assets --path "<${match[1]}>" --verbose publish "${assetId}"`,
-      )
-    }
-    return result
-  })
+  transformStrings(tree, (value) =>
+    value.replace(
+      pipelineCdkAssetsRegex,
+      (_match: string, assemblyDir: string, asset: string) => {
+        const destination =
+          assetDestinationRegex.exec(asset)?.[1] || "<ASSET_ID>"
+        return `cdk-assets --path "<${assemblyDir}>" --verbose publish "${destination}"`
+      },
+    ),
+  )
 }
 
 /** Rewrites every string in `tree`, object keys included, in place. */
