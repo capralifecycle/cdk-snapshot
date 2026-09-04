@@ -5,9 +5,9 @@
 [![node](https://img.shields.io/node/v/@liflig/cdk-snapshot.svg)](https://nodejs.org)
 [![license](https://img.shields.io/npm/l/@liflig/cdk-snapshot.svg)](LICENSE)
 
-Snapshot testing for AWS CDK stacks, without the churn. A stack is synthesized to
-CloudFormation and the values that change on every synth — asset hashes, bootstrap
-parameters, Lambda version suffixes — are stripped, so a snapshot fails only when the
+Snapshot testing for AWS CDK stacks. A stack is synthesized to CloudFormation and
+the values that change on every synth, such as asset hashes, bootstrap parameters
+and Lambda version suffixes are stripped, so a snapshot fails only when the
 infrastructure actually changed.
 
 - One normalization for `node:test`, Bun, Vitest and Jest.
