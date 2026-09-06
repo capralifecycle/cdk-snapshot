@@ -87,7 +87,7 @@
     "@biomejs/biome": "2.5.11",
     "@types/bun": "1.4.0",
     "@types/jest": "30.0.0",
-    "@types/node": "24.13.3",
+    "@types/node": "26.4.1",
     "aws-cdk-lib": "2.267.0",
     "constructs": "10.8.1",
     "jest": "30.5.0",
