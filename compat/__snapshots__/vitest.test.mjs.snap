@@ -1,7 +1,26 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`parity 1`] = `
+exports[`suite > empty 1`] = `{}`;
+
+exports[`suite > nested 1`] = `
 {
+  "Outputs": {
+    "Joined": {
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            "line one
+line two
+",
+            {
+              "Ref": "AWS::URLSuffix",
+            },
+          ],
+        ],
+      },
+    },
+  },
   "Resources": {
     "Bucket83908E77": {
       "DeletionPolicy": "Retain",
@@ -69,6 +88,115 @@ exports[`parity 1`] = `
         ],
       },
       "Type": "AWS::IAM::Role",
+    },
+    "Script09016516": {
+      "Properties": {
+        "Type": "String",
+        "Value": "#!/bin/bash
+echo hello
+",
+      },
+      "Type": "AWS::SSM::Parameter",
+    },
+  },
+}
+`;
+
+exports[`top level 1`] = `
+{
+  "Outputs": {
+    "Joined": {
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            "line one
+line two
+",
+            {
+              "Ref": "AWS::URLSuffix",
+            },
+          ],
+        ],
+      },
+    },
+  },
+  "Resources": {
+    "Bucket83908E77": {
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "BucketName": "parity-bucket",
+      },
+      "Type": "AWS::S3::Bucket",
+      "UpdateReplacePolicy": "Retain",
+    },
+    "Fn9270CBC0": {
+      "DependsOn": [
+        "FnServiceRoleB9001A96",
+      ],
+      "Properties": {
+        "Code": Any<Object>,
+        "Handler": "index.handler",
+        "Role": {
+          "Fn::GetAtt": [
+            "FnServiceRoleB9001A96",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs22.x",
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "FnCurrentVersion17A89ABBxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx": {
+      "Metadata": {
+        "aws:cdk:do-not-refactor": true,
+      },
+      "Properties": {
+        "FunctionName": {
+          "Ref": "Fn9270CBC0",
+        },
+      },
+      "Type": "AWS::Lambda::Version",
+    },
+    "FnServiceRoleB9001A96": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "Script09016516": {
+      "Properties": {
+        "Type": "String",
+        "Value": "#!/bin/bash
+echo hello
+",
+      },
+      "Type": "AWS::SSM::Parameter",
     },
   },
 }
