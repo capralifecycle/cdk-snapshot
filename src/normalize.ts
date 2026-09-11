@@ -9,8 +9,10 @@ const currentVersionRegex = /^(.+CurrentVersion[0-9A-F]{8})[0-9a-f]{32}$/
 const pipelineCdkAssetsRegex =
   /cdk-assets\s+--path\s+\\"([^\\/]+)\/.+?assets\.json\\"\s+--verbose\s+publish\s+\\"(.+?)\\"/g
 const assetDestinationRegex = /:(.*?)(?:-[0-9a-f]{8})?$/
+const assetHashRegex = /(?<![0-9a-f])[0-9a-f]{64}(?![0-9a-f])/g
 
 const maskedVersionSuffix = "x".repeat(32)
+const maskedAssetHash = "<ASSET_HASH>"
 
 /**
  * Returns a copy of `template` with the configured normalizations applied. The
@@ -20,13 +22,18 @@ const maskedVersionSuffix = "x".repeat(32)
  *
  * Step order is significant: earlier steps can remove structures that later
  * ones inspect.
+ *
+ * `assetHashes` are the hashes {@link CdkTemplateOptions.ignoreAssetHashes}
+ * masks, as read from the stack's cloud assembly.
  */
 export function normalize(
   template: Template,
   options: CdkTemplateOptions = {},
+  assetHashes: ReadonlySet<string> = new Set(),
 ): Template {
   const {
     ignoreAssets = false,
+    ignoreAssetHashes = false,
     ignoreBootstrapVersion = true,
     ignoreCurrentVersion = false,
     ignoreMetadata = false,
@@ -41,6 +48,7 @@ export function normalize(
 
   if (ignoreBootstrapVersion) stripBootstrapVersion(result)
   if (ignoreAssets) stripAssets(result, assetPlaceholder)
+  if (ignoreAssetHashes) maskAssetHashes(result, assetHashes)
   if (ignoreCurrentVersion) maskCurrentVersions(result)
   if (ignorePipelineAssets) maskPipelineAssets(result)
   if (subsetResourceTypes) {
@@ -87,6 +95,18 @@ function stripAssets(template: Template, placeholder: unknown): void {
       definition.Image = placeholder
     }
   }
+}
+
+/**
+ * Only a standalone 64-hex run is a candidate, so a longer hex string that
+ * happens to contain an asset hash is left intact.
+ */
+function maskAssetHashes(tree: unknown, hashes: ReadonlySet<string>): void {
+  transformStrings(tree, (value) =>
+    value.replace(assetHashRegex, (hash) =>
+      hashes.has(hash) ? maskedAssetHash : hash,
+    ),
+  )
 }
 
 function maskCurrentVersions(tree: unknown): void {

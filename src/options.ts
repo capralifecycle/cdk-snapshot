@@ -11,6 +11,18 @@ export interface CdkTemplateOptions {
    */
   ignoreAssets?: boolean
   /**
+   * Replace the hash of every asset in the app with `<ASSET_HASH>`, wherever
+   * a string in the template holds it: Lambda code and layers, container
+   * images, `BucketDeployment` sources, nested stack templates, CDK Pipelines
+   * commands. The rest of each value stays, and values that are not assets
+   * are untouched.
+   *
+   * The hashes are read from the asset manifests CDK's default synthesizer
+   * writes. A function using `currentVersion` also needs
+   * {@link CdkTemplateOptions.ignoreCurrentVersion}.
+   */
+  ignoreAssetHashes?: boolean
+  /**
    * Drop the CDK-managed `BootstrapVersion` parameter and its check rule.
    * Defaults to `true`.
    */

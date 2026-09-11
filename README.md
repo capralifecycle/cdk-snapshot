@@ -137,6 +137,7 @@ correct the count.
 | Option | Type | Default | Effect |
 | --- | --- | --- | --- |
 | `ignoreAssets` | `boolean` | `false` | Replaces every `Code` property, every container definition's `Image` and the whole `Parameters` block with `Any<Object>` |
+| `ignoreAssetHashes` | `boolean` | `false` | Replaces the hash of every asset in the app with `<ASSET_HASH>`, wherever it appears |
 | `ignoreBootstrapVersion` | `boolean` | `true` | Drops the `BootstrapVersion` parameter and its check rule |
 | `ignoreCurrentVersion` | `boolean` | `false` | Masks the content hash on Lambda `CurrentVersion` logical IDs and every reference to them |
 | `ignoreMetadata` | `boolean` | `false` | Drops template and resource `Metadata` |
@@ -158,10 +159,28 @@ only if it matches both.
   `Code.fromBucket` key or to a registry image tag such as `nginx:1.27` does not show.
 - Assets outside Lambda `Code` and container images keep their hash: Lambda layers,
   `BucketDeployment` sources, Step Functions and API Gateway definitions read from files,
-  and nested stack templates.
+  and nested stack templates. `ignoreAssetHashes` covers them.
 - A function's `currentVersion` logical ID is a hash over its configuration, code
   included, so a stack that uses it also needs `ignoreCurrentVersion` to stay stable.
 - It does nothing to a template with no `Resources`.
+
+`ignoreAssetHashes` is the precise alternative. It reads the hash of every file and
+container image asset from the asset manifests the app synthesizes, CDK Pipelines stages
+included, and replaces exactly those hashes wherever a string in the template holds one:
+
+```diff
+ "Code": {
+   "S3Bucket": "cdk-hnb659fds-assets-112233445566-eu-west-1",
+-  "S3Key": "9b8fce7ae7f25ef82fdbaf6b72523b99d0875c0c9c826642819fb51f11d9b125.zip",
++  "S3Key": "<ASSET_HASH>.zip",
+ },
+```
+
+Everything else stays visible: the stack's parameters, inline code, registry image tags
+and any hash that belongs to no asset. A function using `currentVersion` still needs
+`ignoreCurrentVersion`, and a CDK Pipeline still needs `ignorePipelineAssets` for its
+destination suffixes, which are not asset hashes. The hashes come from the asset
+manifests that CDK's default synthesizer writes.
 
 `ignoreTags` drops the `Tags` property of each resource. Tags nested deeper stay, such as
 those `Tags.of()` propagates into a launch template's `TagSpecifications`.
@@ -176,8 +195,8 @@ its own `expect`.
 
 ## How it works
 
-Everything is built around one pure function, `cdkTemplate`, which turns a stack into a
-normalized template object. Each runner gets a thin adapter that wraps that function in
+Everything is built around one function, `cdkTemplate`, which synthesizes a stack and
+hands the template to a pure normalizer. Each runner gets a thin adapter that wraps that function in
 whatever the runner's own snapshot assertion looks like, so snapshots keep the naming and
 format that runner already produces.
 

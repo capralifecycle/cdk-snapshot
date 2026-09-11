@@ -87,6 +87,71 @@ describe("ignoreAssets", () => {
   })
 })
 
+describe("ignoreAssetHashes", () => {
+  const asset = "a".repeat(64)
+  const other = "b".repeat(64)
+  const mask = "<ASSET_HASH>"
+
+  const masked = (resources: Template, hashes = new Set([asset])) =>
+    normalize(withResources(resources), { ignoreAssetHashes: true }, hashes)
+      .Resources
+
+  const cases: [label: string, resources: Template, expected: Template][] = [
+    [
+      "inside a string value",
+      { Fn: { Code: { S3Key: `${asset}.zip` } } },
+      { Fn: { Code: { S3Key: `${mask}.zip` } } },
+    ],
+    [
+      "in an array element",
+      { Deploy: { SourceObjectKeys: [`${asset}.zip`] } },
+      { Deploy: { SourceObjectKeys: [`${mask}.zip`] } },
+    ],
+    [
+      "in an intrinsic function fragment",
+      { Nested: { TemplateURL: { "Fn::Join": ["", ["/", `${asset}.json`]] } } },
+      { Nested: { TemplateURL: { "Fn::Join": ["", ["/", `${mask}.json`]] } } },
+    ],
+    [
+      "in an object key",
+      { Fn: { Metadata: { [`asset.${asset}`]: true } } },
+      { Fn: { Metadata: { [`asset.${mask}`]: true } } },
+    ],
+    [
+      "nothing of a hash that is not an asset's",
+      { Fn: { Environment: { PARAMS_HASH: other } } },
+      { Fn: { Environment: { PARAMS_HASH: other } } },
+    ],
+    [
+      "nothing of a longer hex run containing an asset hash",
+      { Fn: { Digest: `${asset}ff` } },
+      { Fn: { Digest: `${asset}ff` } },
+    ],
+  ]
+
+  test.each(cases)("masks %s", (_label, resources, expected) => {
+    expect(masked(resources)).toEqual(expected)
+  })
+
+  test("masks every asset hash in one string", () => {
+    const value = `publish ${asset} then ${other}`
+
+    expect(
+      masked({ Step: { Command: value } }, new Set([asset, other])),
+    ).toEqual({ Step: { Command: `publish ${mask} then ${mask}` } })
+  })
+
+  test("does nothing unless the option is set", () => {
+    const template = normalize(
+      withResources({ Fn: { Code: { S3Key: `${asset}.zip` } } }),
+      {},
+      new Set([asset]),
+    )
+
+    expect(template.Resources.Fn.Code.S3Key).toBe(`${asset}.zip`)
+  })
+})
+
 describe("subsetting", () => {
   const resources = (): Template => ({
     Resources: {
@@ -164,6 +229,7 @@ describe("metadata and tags", () => {
 describe("degenerate templates", () => {
   const options: [label: string, options: CdkTemplateOptions][] = [
     ["ignoreAssets", { ignoreAssets: true }],
+    ["ignoreAssetHashes", { ignoreAssetHashes: true }],
     ["ignoreBootstrapVersion", { ignoreBootstrapVersion: true }],
     ["ignoreCurrentVersion", { ignoreCurrentVersion: true }],
     ["ignoreMetadata", { ignoreMetadata: true }],

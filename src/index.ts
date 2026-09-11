@@ -1,5 +1,6 @@
 import type { Stack } from "aws-cdk-lib"
 import { Template } from "aws-cdk-lib/assertions"
+import { assetHashes } from "./assets.js"
 import { normalize } from "./normalize.js"
 import type { CdkTemplateOptions } from "./options.js"
 
@@ -19,5 +20,9 @@ export function cdkTemplate(
   stack: Stack,
   options: CdkTemplateOptions = {},
 ): Record<string, unknown> {
-  return normalize(Template.fromStack(stack).toJSON(), options)
+  const template = Template.fromStack(stack).toJSON()
+  const hashes = options.ignoreAssetHashes
+    ? assetHashes(stack)
+    : new Set<string>()
+  return normalize(template, options, hashes)
 }
