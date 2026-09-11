@@ -122,7 +122,7 @@ synthesized repeatedly with different options.
 | `ignoreCurrentVersion` | `boolean` | `false` | Masks the content hash on Lambda `CurrentVersion` logical IDs and every reference to them |
 | `ignoreMetadata` | `boolean` | `false` | Drops template and resource `Metadata` |
 | `ignoreTags` | `boolean` | `false` | Drops `Tags` from resource properties |
-| `ignorePipelineAssets` | `boolean` | `false` | Masks asset paths and IDs in CDK Pipelines `cdk-assets` commands |
+| `ignorePipelineAssets` | `boolean` | `false` | Masks asset paths, IDs and destination suffixes in CDK Pipelines `cdk-assets` commands |
 | `subsetResourceTypes` | `string[]` | keep all | Keeps only resources of these CloudFormation types |
 | `subsetResourceKeys` | `string[]` | keep all | Keeps only resources with these logical IDs |
 | `assetPlaceholder` | `unknown` | `anyObject` | Token substituted for asset-derived values |
@@ -194,6 +194,11 @@ Jest now has to run with ESM support enabled, since this package is ESM — see
 
 One option is gone. `yaml` is not supported, so a project snapshotting YAML has to
 regenerate as JSON.
+
+One option masks more. `ignorePipelineAssets` also drops the content-derived suffix that
+recent CDK versions append to asset destinations, which jest-cdk-snapshot keeps. A
+pipeline snapshot taken with it changes once, from `publish "111111111111-eu-west-1-2d2574cc"`
+to `publish "111111111111-eu-west-1"`, and then stays put when asset content changes.
 
 jest-cdk-snapshot's option type also extended `StageSynthesisOptions`, so it accepted
 `skipValidation`, `validateOnSynthesis`, `force`, `errorOnDuplicateSynth` and
