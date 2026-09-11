@@ -1,5 +1,6 @@
 /**
- * Stand-in for values that change on every synth, such as asset hashes.
+ * Stand-in for asset-derived values, which change whenever an asset's content
+ * does.
  * Serializes as `Any<Object>` so snapshots match across test runners.
  *
  * Bun accepts only matchers built by its own `expect`; the Bun entry point

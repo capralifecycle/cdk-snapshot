@@ -6,15 +6,16 @@
 [![license](https://img.shields.io/npm/l/@liflig/cdk-snapshot.svg)](LICENSE)
 
 Snapshot testing for AWS CDK stacks. A stack is synthesized to CloudFormation and
-the values that change on every synth, such as asset hashes, bootstrap parameters
-and Lambda version suffixes are stripped, so a snapshot fails only when the
-infrastructure actually changed.
+normalized before it is snapshotted. The CDK bootstrap version is always dropped.
+Asset hashes, Lambda version suffixes and CDK Pipelines asset IDs change whenever
+an asset's content does; the [options](#options) mask them, so a snapshot fails only
+when the infrastructure itself changed.
 
 - One normalization for `node:test`, Bun, Vitest and Jest.
 - All four record the same template. Switching runner means regenerating the snapshots
   once, see [Switching runner](#switching-runner).
-- A drop-in replacement for `jest-cdk-snapshot`: same options, same defaults, same
-  serialization.
+- Replaces `jest-cdk-snapshot` with the same options, defaults and serialization,
+  see [Migrating](#migrating-from-jest-cdk-snapshot).
 
 ## Install
 
@@ -73,6 +74,18 @@ test("my stack", () => {
 });
 ```
 
+`toMatchCdkSnapshot` does not work in concurrent tests: it snapshots through the global
+`expect`, which Vitest cannot attribute to a test running concurrently. There, snapshot
+the template with the test's own `expect` instead, which records the same entry:
+
+```js
+import { cdkTemplate } from "@liflig/cdk-snapshot/vitest";
+
+test.concurrent("my stack", ({ expect }) => {
+  expect(cdkTemplate(stack, { ignoreAssets: true })).toMatchSnapshot();
+});
+```
+
 ### Jest
 
 ```js
@@ -121,7 +134,7 @@ correct the count.
 
 | Option | Type | Default | Effect |
 | --- | --- | --- | --- |
-| `ignoreAssets` | `boolean` | `false` | Replaces Lambda `Code`, container `Image` and the whole `Parameters` block with `Any<Object>` |
+| `ignoreAssets` | `boolean` | `false` | Replaces every `Code` property, every container definition's `Image` and the whole `Parameters` block with `Any<Object>` |
 | `ignoreBootstrapVersion` | `boolean` | `true` | Drops the `BootstrapVersion` parameter and its check rule |
 | `ignoreCurrentVersion` | `boolean` | `false` | Masks the content hash on Lambda `CurrentVersion` logical IDs and every reference to them |
 | `ignoreMetadata` | `boolean` | `false` | Drops template and resource `Metadata` |
@@ -135,9 +148,24 @@ correct the count.
 `subsetResourceTypes` and `subsetResourceKeys` intersect: given both, a resource is kept
 only if it matches both.
 
-`ignoreAssets` replaces the entire `Parameters` block rather than the individual asset
-parameters, matching what jest-cdk-snapshot does. It does nothing to a template with no
-`Resources`.
+`ignoreAssets` is coarse, matching what jest-cdk-snapshot does:
+
+- It replaces the entire `Parameters` block. Under CDK's default synthesizer no parameter
+  carries an asset hash, so what disappears is the parameters the stack declares itself.
+- It replaces values that are not assets as well, so a change to inline Lambda code, to a
+  `Code.fromBucket` key or to a registry image tag such as `nginx:1.27` does not show.
+- Assets outside Lambda `Code` and container images keep their hash: Lambda layers,
+  `BucketDeployment` sources, Step Functions and API Gateway definitions read from files,
+  and nested stack templates.
+- A function's `currentVersion` logical ID is a hash over its configuration, code
+  included, so a stack that uses it also needs `ignoreCurrentVersion` to stay stable.
+- It does nothing to a template with no `Resources`.
+
+`ignoreTags` drops the `Tags` property of each resource. Tags nested deeper stay, such as
+those `Tags.of()` propagates into a launch template's `TagSpecifications`.
+
+`ignorePipelineAssets` also drops the 8-character suffix CDK appends to each asset
+destination, since that suffix changes with the asset's content too.
 
 `anyObject` is exported from the package root. It is an asymmetric matcher that serializes
 as `Any<Object>` and matches any non-null object. The Bun entry point substitutes

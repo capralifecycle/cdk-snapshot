@@ -1,7 +1,13 @@
 export interface CdkTemplateOptions {
   /**
-   * Replace asset-derived values — Lambda `Code`, container `Image`, and the
-   * template parameters carrying asset hashes — with {@link anyObject}.
+   * Replace every resource's `Code` property, every container definition's
+   * `Image`, and the whole `Parameters` block with
+   * {@link CdkTemplateOptions.assetPlaceholder}.
+   *
+   * Assets elsewhere, such as Lambda layers, keep their hash. A function using
+   * `currentVersion` also needs
+   * {@link CdkTemplateOptions.ignoreCurrentVersion}, since the version's
+   * logical ID hashes the code.
    */
   ignoreAssets?: boolean
   /**
@@ -13,9 +19,15 @@ export interface CdkTemplateOptions {
   ignoreCurrentVersion?: boolean
   /** Drop template and resource `Metadata`. */
   ignoreMetadata?: boolean
-  /** Drop `Tags` from resource properties. */
+  /**
+   * Drop each resource's `Tags` property. Tags nested deeper, such as a launch
+   * template's `TagSpecifications`, are kept.
+   */
   ignoreTags?: boolean
-  /** Mask asset paths and IDs inside CDK Pipelines `cdk-assets` commands. */
+  /**
+   * Mask asset paths, IDs and destination suffixes inside CDK Pipelines
+   * `cdk-assets` commands.
+   */
   ignorePipelineAssets?: boolean
   /** Keep only resources of these CloudFormation types. */
   subsetResourceTypes?: string[]
