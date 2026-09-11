@@ -1,8 +1,10 @@
-import { describe, expect, test } from "bun:test"
-import "../lib/bun.js"
-import { emptyStack, fixtureStack, options } from "./fixture.cjs"
+// Loads the package by name, so the `require` export condition is what
+// resolves it, as it is for a CommonJS consumer.
+require("@liflig/cdk-snapshot/jest")
+const { emptyStack, fixtureStack, options } = require("./fixture.cjs")
 
 test("top level", () => {
+  expect.assertions(1)
   expect(fixtureStack()).toMatchCdkSnapshot(options)
 })
 

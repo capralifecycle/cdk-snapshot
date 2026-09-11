@@ -1,6 +1,6 @@
 import { describe, test } from "node:test"
 import { cdkTemplate, configureCdkSnapshots } from "../lib/node.js"
-import { emptyStack, fixtureStack, options } from "./fixture.mjs"
+import { emptyStack, fixtureStack, options } from "./fixture.cjs"
 
 configureCdkSnapshots()
 

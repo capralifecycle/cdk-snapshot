@@ -47,6 +47,7 @@ compile:
 compat-snapshots: compile
 	bun test compat/bun.test.mjs --update-snapshots
 	NODE_OPTIONS=--experimental-vm-modules bunx jest -c compat/jest.config.mjs -u
+	bunx jest -c compat/jest-cjs.config.cjs -u
 	bunx vitest run --update --config compat/vitest.config.mjs
 	node --test --test-update-snapshots compat/node.test.mjs
 
