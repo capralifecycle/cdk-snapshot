@@ -1,10 +1,14 @@
 import { describe, expect, test } from "bun:test"
-import { App, Stack, Stage } from "aws-cdk-lib"
+import { App, NestedStack, Stack, Stage } from "aws-cdk-lib"
+import { ContainerImage, FargateTaskDefinition } from "aws-cdk-lib/aws-ecs"
 import {
   Code,
   Function as LambdaFunction,
+  LayerVersion,
   Runtime,
 } from "aws-cdk-lib/aws-lambda"
+import { Bucket } from "aws-cdk-lib/aws-s3"
+import { BucketDeployment, Source } from "aws-cdk-lib/aws-s3-deployment"
 import {
   CodePipeline,
   CodePipelineSource,
@@ -38,6 +42,26 @@ function addFunction(stack: Stack, assetPath: string): void {
 function functionStack(assetPath: string): Stack {
   const stack = new Stack(new App(), "Stack", { env })
   addFunction(stack, assetPath)
+  return stack
+}
+
+/**
+ * One of each place an asset hash ends up. The layer sits in a nested stack,
+ * so the nested template's own hash follows the asset content too.
+ */
+function assetKindsStack(assetPath: string): Stack {
+  const stack = new Stack(new App(), "Stack", { env })
+  addFunction(stack, assetPath)
+  new BucketDeployment(stack, "Deploy", {
+    sources: [Source.asset(assetPath)],
+    destinationBucket: new Bucket(stack, "Bucket"),
+  })
+  new FargateTaskDefinition(stack, "Task").addContainer("App", {
+    image: ContainerImage.fromAsset(assetPath),
+  })
+  new LayerVersion(new NestedStack(stack, "Nested"), "Layer", {
+    code: Code.fromAsset(assetPath),
+  })
   return stack
 }
 
@@ -86,6 +110,24 @@ describe("a change to asset content", () => {
   test("still shows through ignoreAssets alone, in the version's logical ID", () => {
     const [original, changed] = synthesizeBoth(functionStack, {
       ignoreAssets: true,
+    })
+
+    expect(changed).not.toEqual(original)
+  })
+
+  test("in every kind of asset is hidden by ignoreAssetHashes together with ignoreCurrentVersion", () => {
+    const [original, changed] = synthesizeBoth(assetKindsStack, {
+      ignoreAssetHashes: true,
+      ignoreCurrentVersion: true,
+    })
+
+    expect(changed).toEqual(original)
+  })
+
+  test("in layers, deployments and nested stacks shows through ignoreAssets", () => {
+    const [original, changed] = synthesizeBoth(assetKindsStack, {
+      ignoreAssets: true,
+      ignoreCurrentVersion: true,
     })
 
     expect(changed).not.toEqual(original)

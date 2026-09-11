@@ -7,6 +7,7 @@ import {
   Runtime,
 } from "aws-cdk-lib/aws-lambda"
 import { Bucket } from "aws-cdk-lib/aws-s3"
+import { StringParameter } from "aws-cdk-lib/aws-ssm"
 import { cdkTemplate } from "../src/bun.js"
 
 const assetPath = new URL("./fixtures/asset", import.meta.url).pathname
@@ -37,6 +38,23 @@ test("ignoreAssets hides the asset hash so the snapshot is stable", () => {
   expect(
     cdkTemplate(stackWithLambda(), { ignoreAssets: true }),
   ).toMatchSnapshot()
+})
+
+test("ignoreAssetHashes masks the hash and keeps the rest of the asset reference", () => {
+  expect(
+    cdkTemplate(stackWithLambda(), { ignoreAssetHashes: true }),
+  ).toMatchSnapshot()
+})
+
+test("ignoreAssetHashes leaves a hash that belongs to no asset", () => {
+  const stack = stackWithLambda()
+  const digest = "c".repeat(64)
+  new StringParameter(stack, "Digest", { stringValue: digest })
+
+  const template = cdkTemplate(stack, { ignoreAssetHashes: true })
+
+  expect(JSON.stringify(template)).toContain(digest)
+  expect(JSON.stringify(template)).not.toMatch(/[0-9a-f]{64}\.zip/)
 })
 
 /**
