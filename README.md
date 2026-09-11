@@ -6,7 +6,7 @@
 [![license](https://img.shields.io/npm/l/@liflig/cdk-snapshot.svg)](LICENSE)
 
 Snapshot testing for AWS CDK stacks. A stack is synthesized to CloudFormation and
-normalized before it is snapshotted. The CDK bootstrap version is always dropped.
+normalized before it is snapshotted. The CDK bootstrap version is dropped by default.
 Asset hashes, Lambda version suffixes and CDK Pipelines asset IDs change whenever
 an asset's content does; the [options](#options) mask them, so a snapshot fails only
 when the infrastructure itself changed.
