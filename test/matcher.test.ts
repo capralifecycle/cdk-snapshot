@@ -82,6 +82,37 @@ test("registers itself on the runner's expect", () => {
   expect(stack()).toMatchCdkSnapshot()
 })
 
+/**
+ * jest-cdk-snapshot calls the snapshot matcher directly, so `expect.assertions`
+ * sees one assertion per call; the nested `expect` here must not add a second.
+ */
+test("counts as one assertion where the runner tracks assertion calls", () => {
+  const state = { assertionCalls: 0 }
+  let matcher: Matcher | undefined
+  const fakeExpect: ExpectLike = Object.assign(
+    (_actual: unknown) => ({
+      toMatchSnapshot: () => {
+        state.assertionCalls++
+      },
+    }),
+    {
+      extend: (matchers: Record<string, unknown>) => {
+        matcher = matchers.toMatchCdkSnapshot as Matcher
+      },
+      getState: () => ({ ...state }),
+      setState: (next: { assertionCalls: number }) => {
+        Object.assign(state, next)
+      },
+    },
+  )
+  registerCdkMatcher(fakeExpect, cdkTemplate)
+
+  state.assertionCalls = 1
+  matcher?.call({}, stack())
+
+  expect(state.assertionCalls).toBe(1)
+})
+
 test("negating the matcher is refused", () => {
   expect(() => expect(stack()).not.toMatchCdkSnapshot()).toThrow(
     "cannot be negated",

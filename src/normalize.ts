@@ -8,7 +8,7 @@ export type Template = Record<string, any>
 const currentVersionRegex = /^(.+CurrentVersion[0-9A-F]{8})[0-9a-f]{32}$/
 const pipelineCdkAssetsRegex =
   /cdk-assets\s+--path\s+\\"([^\\/]+)\/.+?assets\.json\\"\s+--verbose\s+publish\s+\\"(.+?)\\"/g
-const assetDestinationRegex = /:(.*)$/
+const assetDestinationRegex = /:(.*?)(?:-[0-9a-f]{8})?$/
 
 const maskedVersionSuffix = "x".repeat(32)
 
@@ -97,8 +97,9 @@ function maskCurrentVersions(tree: unknown): void {
 }
 
 /**
- * `cdk-assets ... publish "<hash>:<destination>"` — the hash changes on every
- * synth, the destination does not.
+ * `cdk-assets ... publish "<hash>:<account>-<region>-<suffix>"` — the hash and
+ * the 8-hex suffix follow the asset's content, the account and region do not.
+ * CDK versions before the suffix emit `<hash>:<account>-<region>`.
  */
 function maskPipelineAssets(tree: unknown): void {
   transformStrings(tree, (value) =>

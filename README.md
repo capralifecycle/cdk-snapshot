@@ -6,15 +6,16 @@
 [![license](https://img.shields.io/npm/l/@liflig/cdk-snapshot.svg)](LICENSE)
 
 Snapshot testing for AWS CDK stacks. A stack is synthesized to CloudFormation and
-the values that change on every synth, such as asset hashes, bootstrap parameters
-and Lambda version suffixes are stripped, so a snapshot fails only when the
-infrastructure actually changed.
+normalized before it is snapshotted. The CDK bootstrap version is always dropped.
+Asset hashes, Lambda version suffixes and CDK Pipelines asset IDs change whenever
+an asset's content does; the [options](#options) mask them, so a snapshot fails only
+when the infrastructure itself changed.
 
 - One normalization for `node:test`, Bun, Vitest and Jest.
 - All four record the same template. Switching runner means regenerating the snapshots
   once, see [Switching runner](#switching-runner).
-- A drop-in replacement for `jest-cdk-snapshot`: same options, same defaults, same
-  serialization.
+- Replaces `jest-cdk-snapshot` with the same options, defaults and serialization,
+  see [Migrating](#migrating-from-jest-cdk-snapshot).
 
 ## Install
 
@@ -73,6 +74,18 @@ test("my stack", () => {
 });
 ```
 
+`toMatchCdkSnapshot` does not work in concurrent tests: it snapshots through the global
+`expect`, which Vitest cannot attribute to a test running concurrently. There, snapshot
+the template with the test's own `expect` instead, which records the same entry:
+
+```js
+import { cdkTemplate } from "@liflig/cdk-snapshot/vitest";
+
+test.concurrent("my stack", ({ expect }) => {
+  expect(cdkTemplate(stack, { ignoreAssets: true })).toMatchSnapshot();
+});
+```
+
 ### Jest
 
 ```js
@@ -113,16 +126,20 @@ synthesized repeatedly with different options.
 
 `toMatchCdkSnapshot` cannot be negated; `.not` throws rather than silently passing.
 
+Under Jest and Vitest, `toMatchCdkSnapshot` counts as one assertion towards
+`expect.assertions()`. Bun counts it as two, since its `expect` exposes no way to
+correct the count.
+
 ## Options
 
 | Option | Type | Default | Effect |
 | --- | --- | --- | --- |
-| `ignoreAssets` | `boolean` | `false` | Replaces Lambda `Code`, container `Image` and the whole `Parameters` block with `Any<Object>` |
+| `ignoreAssets` | `boolean` | `false` | Replaces every `Code` property, every container definition's `Image` and the whole `Parameters` block with `Any<Object>` |
 | `ignoreBootstrapVersion` | `boolean` | `true` | Drops the `BootstrapVersion` parameter and its check rule |
 | `ignoreCurrentVersion` | `boolean` | `false` | Masks the content hash on Lambda `CurrentVersion` logical IDs and every reference to them |
 | `ignoreMetadata` | `boolean` | `false` | Drops template and resource `Metadata` |
 | `ignoreTags` | `boolean` | `false` | Drops `Tags` from resource properties |
-| `ignorePipelineAssets` | `boolean` | `false` | Masks asset paths and IDs in CDK Pipelines `cdk-assets` commands |
+| `ignorePipelineAssets` | `boolean` | `false` | Masks asset paths, IDs and destination suffixes in CDK Pipelines `cdk-assets` commands |
 | `subsetResourceTypes` | `string[]` | keep all | Keeps only resources of these CloudFormation types |
 | `subsetResourceKeys` | `string[]` | keep all | Keeps only resources with these logical IDs |
 | `assetPlaceholder` | `unknown` | `anyObject` | Token substituted for asset-derived values |
@@ -131,9 +148,24 @@ synthesized repeatedly with different options.
 `subsetResourceTypes` and `subsetResourceKeys` intersect: given both, a resource is kept
 only if it matches both.
 
-`ignoreAssets` replaces the entire `Parameters` block rather than the individual asset
-parameters, matching what jest-cdk-snapshot does. It does nothing to a template with no
-`Resources`.
+`ignoreAssets` is coarse, matching what jest-cdk-snapshot does:
+
+- It replaces the entire `Parameters` block. Under CDK's default synthesizer no parameter
+  carries an asset hash, so what disappears is the parameters the stack declares itself.
+- It replaces values that are not assets as well, so a change to inline Lambda code, to a
+  `Code.fromBucket` key or to a registry image tag such as `nginx:1.27` does not show.
+- Assets outside Lambda `Code` and container images keep their hash: Lambda layers,
+  `BucketDeployment` sources, Step Functions and API Gateway definitions read from files,
+  and nested stack templates.
+- A function's `currentVersion` logical ID is a hash over its configuration, code
+  included, so a stack that uses it also needs `ignoreCurrentVersion` to stay stable.
+- It does nothing to a template with no `Resources`.
+
+`ignoreTags` drops the `Tags` property of each resource. Tags nested deeper stay, such as
+those `Tags.of()` propagates into a launch template's `TagSpecifications`.
+
+`ignorePipelineAssets` also drops the 8-character suffix CDK appends to each asset
+destination, since that suffix changes with the asset's content too.
 
 `anyObject` is exported from the package root. It is an asymmetric matcher that serializes
 as `Any<Object>` and matches any non-null object. The Bun entry point substitutes
@@ -175,6 +207,9 @@ make ci      # what the CI workflow runs: refuses a stale lockfile, fails on an 
 `make snapshots` regenerates the unit snapshots plus the shared fixture under all four
 runners, which `test/compat.test.ts` then compares against each other.
 
+`make compat-check` runs only the four runners and fails if their snapshots changed. CI
+runs it on the oldest Node that `engines` in `package.json` allows.
+
 ## Migrating from jest-cdk-snapshot
 
 Change the import. Call sites and `.snap` files stay as they are, since the options, their
@@ -194,6 +229,11 @@ Jest now has to run with ESM support enabled, since this package is ESM — see
 
 One option is gone. `yaml` is not supported, so a project snapshotting YAML has to
 regenerate as JSON.
+
+One option masks more. `ignorePipelineAssets` also drops the content-derived suffix that
+recent CDK versions append to asset destinations, which jest-cdk-snapshot keeps. A
+pipeline snapshot taken with it changes once, from `publish "111111111111-eu-west-1-2d2574cc"`
+to `publish "111111111111-eu-west-1"`, and then stays put when asset content changes.
 
 jest-cdk-snapshot's option type also extended `StageSynthesisOptions`, so it accepted
 `skipValidation`, `validateOnSynthesis`, `force`, `errorOnDuplicateSynth` and

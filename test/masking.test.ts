@@ -90,8 +90,8 @@ describe("current version masking", () => {
 })
 
 /**
- * CDK Pipelines embeds asset paths and IDs in shell commands, which change on
- * every synth.
+ * CDK Pipelines embeds asset IDs in shell commands, so the commands change
+ * whenever an asset's content does.
  */
 describe("pipeline asset masking", () => {
   const command = (path: string, asset: string) =>
@@ -102,6 +102,16 @@ describe("pipeline asset masking", () => {
       "the path and the trailing region",
       command("assembly-Pipeline", "abc123:eu-west-1"),
       'cdk-assets --path "<assembly-Pipeline>" --verbose publish "eu-west-1"',
+    ],
+    [
+      "the content-derived suffix on the destination",
+      command("assembly-Pipeline", "abc123:111111111111-eu-west-1-2d2574cc"),
+      'cdk-assets --path "<assembly-Pipeline>" --verbose publish "111111111111-eu-west-1"',
+    ],
+    [
+      "nothing of a destination without the suffix",
+      command("assembly-Pipeline", "abc123:111111111111-eu-west-1"),
+      'cdk-assets --path "<assembly-Pipeline>" --verbose publish "111111111111-eu-west-1"',
     ],
     [
       "an asset with no region suffix",

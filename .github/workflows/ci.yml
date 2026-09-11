@@ -31,6 +31,15 @@ jobs:
         with:
           bun-version-file: ".bun-version"
 
+      # The oldest Node that package.json admits, so a Node API newer than the
+      # engines floor fails here rather than in a consumer's install.
+      - id: engines
+        run: echo "node=$(jq -r '.engines.node | ltrimstr(">=")' package.json)" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ steps.engines.outputs.node }}
+      - run: make install-frozen compat-check
+
       # The snapshot matrix runs the same fixture under node:test, and
       # semantic-release runs on Node.
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0

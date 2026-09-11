@@ -18,6 +18,9 @@ export interface ExpectLike {
     toMatchSnapshot(propertyMatchers?: Record<string, unknown>): void
   }
   extend(matchers: Record<string, unknown>): void
+  /** Jest and Vitest track assertion calls here; Bun has neither method. */
+  getState?(): { assertionCalls: number }
+  setState?(state: { assertionCalls: number }): void
 }
 
 export type TemplateFn = (
@@ -45,12 +48,15 @@ export function registerCdkMatcher(
         throw new Error("toMatchCdkSnapshot cannot be negated with `.not`.")
       }
       const { propertyMatchers, ...templateOptions } = options
+      const assertionCalls = expect.getState?.().assertionCalls
       const assertion = expect(cdkTemplate(received, templateOptions))
       if (propertyMatchers) {
         assertion.toMatchSnapshot(propertyMatchers)
       } else {
         assertion.toMatchSnapshot()
       }
+      // The nested snapshot assertion must not count towards `expect.assertions()`.
+      if (assertionCalls !== undefined) expect.setState?.({ assertionCalls })
       return { pass: true, message: () => "" }
     },
   })

@@ -40,20 +40,35 @@ test:
 compile:
 	bun run build
 
-# Regenerates the unit snapshots, then the same stacks under every supported
-# runner so that test/compat.test.ts can compare what they produced.
-.PHONY: snapshots
-snapshots: compile
+# Regenerates the shared fixture under every supported runner, so that
+# test/compat.test.ts can compare what they produced. Jest and node:test run on
+# whichever Node is on PATH.
+.PHONY: compat-snapshots
+compat-snapshots: compile
 	bun test compat/bun.test.mjs --update-snapshots
 	NODE_OPTIONS=--experimental-vm-modules bunx jest -c compat/jest.config.mjs -u
 	bunx vitest run --update --config compat/vitest.config.mjs
 	node --test --test-update-snapshots compat/node.test.mjs
+
+# Regenerates the unit snapshots and the runner snapshots.
+.PHONY: snapshots
+snapshots: compat-snapshots
 	bun run snapshots
+
+define fail-on-snapshot-change
+	git add --intent-to-add ':(glob)**/__snapshots__/**'
+	git diff --exit-code ':(glob)**/__snapshots__/**'
+endef
 
 .PHONY: snapshots-check
 snapshots-check: snapshots
-	git add --intent-to-add ':(glob)**/__snapshots__/**'
-	git diff --exit-code ':(glob)**/__snapshots__/**'
+	$(fail-on-snapshot-change)
+
+# The runner matrix alone, for checking another Node version against the
+# committed snapshots. CI runs it on the oldest Node that package.json allows.
+.PHONY: compat-check
+compat-check: compat-snapshots
+	$(fail-on-snapshot-change)
 
 .PHONY: clean
 clean:
