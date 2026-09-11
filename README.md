@@ -113,6 +113,10 @@ synthesized repeatedly with different options.
 
 `toMatchCdkSnapshot` cannot be negated; `.not` throws rather than silently passing.
 
+Under Jest and Vitest, `toMatchCdkSnapshot` counts as one assertion towards
+`expect.assertions()`. Bun counts it as two, since its `expect` exposes no way to
+correct the count.
+
 ## Options
 
 | Option | Type | Default | Effect |
