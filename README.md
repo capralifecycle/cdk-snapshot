@@ -179,6 +179,9 @@ make ci      # what the CI workflow runs: refuses a stale lockfile, fails on an 
 `make snapshots` regenerates the unit snapshots plus the shared fixture under all four
 runners, which `test/compat.test.ts` then compares against each other.
 
+`make compat-check` runs only the four runners and fails if their snapshots changed. CI
+runs it on the oldest Node that `engines` in `package.json` allows.
+
 ## Migrating from jest-cdk-snapshot
 
 Change the import. Call sites and `.snap` files stay as they are, since the options, their
