@@ -7,7 +7,7 @@ export type { CdkSnapshotOptions, CdkTemplateOptions } from "./options.js"
 
 /**
  * Aligns `node:test` with the snapshot location and serialization the other
- * runners use, so one set of snapshot files serves all of them.
+ * runners use, so its snapshots record templates the same way theirs do.
  *
  * Call once, before any test runs.
  */

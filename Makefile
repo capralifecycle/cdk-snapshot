@@ -40,7 +40,7 @@ test:
 compile:
 	bun run build
 
-# Regenerates the unit snapshots, then the same stack under every supported
+# Regenerates the unit snapshots, then the same stacks under every supported
 # runner so that test/compat.test.ts can compare what they produced.
 .PHONY: snapshots
 snapshots: compile
