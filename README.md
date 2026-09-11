@@ -11,7 +11,8 @@ and Lambda version suffixes are stripped, so a snapshot fails only when the
 infrastructure actually changed.
 
 - One normalization for `node:test`, Bun, Vitest and Jest.
-- All four write the same snapshot bodies, so `.snap` files survive a change of runner.
+- All four record the same template. Switching runner means regenerating the snapshots
+  once, see [Switching runner](#switching-runner).
 - A drop-in replacement for `jest-cdk-snapshot`: same options, same defaults, same
   serialization.
 
@@ -144,8 +145,25 @@ its own `expect`.
 Everything is built around one pure function, `cdkTemplate`, which turns a stack into a
 normalized template object. Each runner gets a thin adapter that wraps that function in
 whatever the runner's own snapshot assertion looks like, so snapshots keep the naming and
-format that runner already produces. All four write the same snapshot bodies — only the
-file header differs.
+format that runner already produces.
+
+## Switching runner
+
+Regenerate the snapshots with the new runner. The templates they record stay the same; the
+diff is limited to how each runner lays out the file around them:
+
+| | Jest | Vitest | node:test | Bun |
+| --- | --- | --- | --- | --- |
+| Header | Jest's, and files without it are rejected | Vitest's | none | Bun's |
+| Name of a test inside `describe` | `suite test 1` | `suite > test 1` | `suite > test 1` | `suite test 1` |
+| Entry order | sorted | sorted | sorted | test order |
+| Single-line snapshot, such as `{}` | inline | inline | on a line of its own | inline |
+| Multi-line string inside a template | starts on its key's line | starts on its key's line | starts on its key's line | string and the comma after it on lines of their own |
+
+Entry order does not affect matching, but it makes a regeneration diff look larger than it
+is: two similar snapshots trading places reads as values changing.
+
+`test/compat.test.ts` pins every row, so a runner that changes its format fails the build.
 
 ## Development
 

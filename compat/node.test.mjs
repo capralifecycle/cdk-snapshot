@@ -1,9 +1,19 @@
-import test from "node:test"
+import { describe, test } from "node:test"
 import { cdkTemplate, configureCdkSnapshots } from "../lib/node.js"
-import { fixtureStack, options } from "./fixture.mjs"
+import { emptyStack, fixtureStack, options } from "./fixture.mjs"
 
 configureCdkSnapshots()
 
-test("parity", (t) => {
+test("top level", (t) => {
   t.assert.snapshot(cdkTemplate(fixtureStack(), options))
+})
+
+describe("suite", () => {
+  test("nested", (t) => {
+    t.assert.snapshot(cdkTemplate(fixtureStack(), options))
+  })
+
+  test("empty", (t) => {
+    t.assert.snapshot(cdkTemplate(emptyStack(), options))
+  })
 })

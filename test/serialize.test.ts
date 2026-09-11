@@ -3,8 +3,8 @@ import { anyObject } from "../src/placeholder.js"
 import { serialize } from "../src/serialize.js"
 
 /**
- * The serializer is what lets `node:test` share snapshot files with the other
- * runners. These cases pin the formatting that compatibility depends on.
+ * The serializer is what makes `node:test` record templates the way the other
+ * runners do. These cases pin the formatting that depends on.
  */
 const values: [label: string, value: unknown, expected: string][] = [
   ["string", "text", '"text"'],
