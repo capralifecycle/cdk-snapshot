@@ -50,6 +50,19 @@ function body(runner: Runner, key: string): string {
   return entry[1]
 }
 
+/**
+ * CommonJS Jest resolves the package through its `require` export condition
+ * and loads the CommonJS build, which has to record exactly what ESM does.
+ */
+test("CommonJS Jest writes the same file as ESM Jest", () => {
+  const read = (file: string) =>
+    readFileSync(
+      new URL(`../compat/__snapshots__/${file}`, import.meta.url),
+    ).toString("utf8")
+
+  expect(read("jest-cjs.test.cjs.snap")).toBe(read("jest.test.mjs.snap"))
+})
+
 test("each runner stamps its own header, except node:test", () => {
   const versions = RUNNERS.map((runner) => files[runner].header?.split(",")[0])
 

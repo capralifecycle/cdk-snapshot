@@ -1,19 +1,21 @@
 // Stacks shared by every runner, so a difference between their snapshots
-// can only come from the runner.
-import { App, Aws, CfnOutput, Fn, Stack } from "aws-cdk-lib"
-import {
+// can only come from the runner. CommonJS, so that CommonJS Jest can load it
+// on every supported Node.
+const path = require("node:path")
+const { App, Aws, CfnOutput, Fn, Stack } = require("aws-cdk-lib")
+const {
   Code,
-  Function as LambdaFunction,
+  Function: LambdaFunction,
   Runtime,
-} from "aws-cdk-lib/aws-lambda"
-import { Bucket } from "aws-cdk-lib/aws-s3"
-import { StringParameter } from "aws-cdk-lib/aws-ssm"
+} = require("aws-cdk-lib/aws-lambda")
+const { Bucket } = require("aws-cdk-lib/aws-s3")
+const { StringParameter } = require("aws-cdk-lib/aws-ssm")
 
-const assetPath = new URL("./asset", import.meta.url).pathname
+const assetPath = path.join(__dirname, "asset")
 
 const env = { account: "112233445566", region: "eu-west-1" }
 
-export function fixtureStack() {
+function fixtureStack() {
   const app = new App()
   const stack = new Stack(app, "Stack", { env })
   new Bucket(stack, "Bucket", { bucketName: "parity-bucket" })
@@ -37,8 +39,10 @@ export function fixtureStack() {
 }
 
 /** Normalizes to `{}`, a snapshot short enough to fit on one line. */
-export function emptyStack() {
+function emptyStack() {
   return new Stack(new App(), "Empty", { env })
 }
 
-export const options = { ignoreAssets: true, ignoreCurrentVersion: true }
+const options = { ignoreAssets: true, ignoreCurrentVersion: true }
+
+module.exports = { emptyStack, fixtureStack, options }

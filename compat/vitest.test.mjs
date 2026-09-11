@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest"
 import "../lib/vitest.js"
-import { emptyStack, fixtureStack, options } from "./fixture.mjs"
+import { emptyStack, fixtureStack, options } from "./fixture.cjs"
 
 test("top level", () => {
   expect.assertions(1)

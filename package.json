@@ -28,12 +28,18 @@
     "bun",
     "node-test"
   ],
-  "main": "./lib/index.js",
-  "types": "./lib/index.d.ts",
+  "main": "./lib/cjs/index.js",
+  "types": "./lib/cjs/index.d.ts",
   "exports": {
     ".": {
-      "types": "./lib/index.d.ts",
-      "import": "./lib/index.js",
+      "import": {
+        "types": "./lib/index.d.ts",
+        "default": "./lib/index.js"
+      },
+      "require": {
+        "types": "./lib/cjs/index.d.ts",
+        "default": "./lib/cjs/index.js"
+      },
       "default": "./lib/index.js"
     },
     "./bun": {
@@ -42,8 +48,14 @@
       "default": "./lib/bun.js"
     },
     "./jest": {
-      "types": "./lib/jest.d.ts",
-      "import": "./lib/jest.js",
+      "import": {
+        "types": "./lib/jest.d.ts",
+        "default": "./lib/jest.js"
+      },
+      "require": {
+        "types": "./lib/cjs/jest.d.ts",
+        "default": "./lib/cjs/jest.js"
+      },
       "default": "./lib/jest.js"
     },
     "./node": {
@@ -62,7 +74,7 @@
     "lib/**/*"
   ],
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && tsc -p tsconfig.cjs.json && echo '{\"type\":\"commonjs\"}' > lib/cjs/package.json",
     "test": "bun test ./test",
     "snapshots": "bun test ./test --update-snapshots",
     "typecheck": "tsc -p tsconfig.check.json",

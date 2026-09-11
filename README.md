@@ -25,7 +25,8 @@ npm install --save-dev @liflig/cdk-snapshot
 pnpm add -D @liflig/cdk-snapshot
 ```
 
-The package is ESM. Under Jest that needs configuration, see [Jest](#jest).
+The package is ESM, with a CommonJS build of the root and Jest entry points for
+CommonJS Jest projects.
 
 ## Usage
 
@@ -96,15 +97,16 @@ test("my stack", () => {
 });
 ```
 
-Jest loads this package as ESM, which it does only with its ESM support enabled:
+Instead of importing it in each test file, the entry point can be listed once in
+`setupFilesAfterEnv`.
+
+A CommonJS test file, including one ts-jest or babel-jest compiles to CommonJS, loads the
+CommonJS build and needs no configuration. An ESM test file loads the ESM build, and
+needs Jest's ESM support enabled as any ESM test file does:
 
 ```sh
 NODE_OPTIONS=--experimental-vm-modules jest
 ```
-
-A CommonJS test file additionally needs Node 24.9 or later, where Jest can `require()` an
-ESM package. Below that, the test file has to be ESM or go through a transform that
-compiles the package to CommonJS.
 
 The Jest entry point uses the global `expect`, so it throws on import if Jest is
 configured with `injectGlobals: false`.
@@ -205,15 +207,17 @@ make ci      # what the CI workflow runs: refuses a stale lockfile, fails on an 
 ```
 
 `make snapshots` regenerates the unit snapshots plus the shared fixture under all four
-runners, which `test/compat.test.ts` then compares against each other.
+runners, Jest once as ESM and once as CommonJS, which `test/compat.test.ts` then compares
+against each other.
 
 `make compat-check` runs only the four runners and fails if their snapshots changed. CI
 runs it on the oldest Node that `engines` in `package.json` allows.
 
 ## Migrating from jest-cdk-snapshot
 
-Change the import. Call sites and `.snap` files stay as they are, since the options, their
-defaults and the serialization all match.
+Change the import, or the `setupFilesAfterEnv` entry. Call sites and `.snap` files stay
+as they are, since the options, their defaults and the serialization all match, and the
+Jest configuration stays as it is, CommonJS or ESM.
 
 ```diff
 -import "jest-cdk-snapshot"
@@ -223,9 +227,6 @@ defaults and the serialization all match.
 Verified against two public CDK libraries, liflig-cdk and cdk-cloudfront-auth: every
 existing snapshot passes under `jest --ci`, and a forced `--updateSnapshot` rewrites
 nothing.
-
-Jest now has to run with ESM support enabled, since this package is ESM — see
-[Jest](#jest).
 
 One option is gone. `yaml` is not supported, so a project snapshotting YAML has to
 regenerate as JSON.
