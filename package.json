@@ -76,7 +76,7 @@
   "scripts": {
     "build": "tsc && tsc -p tsconfig.cjs.json && echo '{\"type\":\"commonjs\"}' > lib/cjs/package.json",
     "test": "bun test ./test",
-    "snapshots": "bun test ./test --update-snapshots",
+    "snapshots": "bun test ./test --update-snapshots --coverage --coverage-reporter=text --coverage-reporter=lcov",
     "typecheck": "tsc -p tsconfig.check.json",
     "check": "biome ci && bun run typecheck",
     "fix": "biome check --write",

@@ -1,3 +1,6 @@
 [install]
 # Only install dependency versions that have been public for three days.
 minimumReleaseAge = 259200
+
+[test]
+coverageSkipTestFiles = true
