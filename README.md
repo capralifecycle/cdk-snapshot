@@ -41,14 +41,14 @@ _every_ snapshot in the run, not just CDK ones, so snapshots taken elsewhere in 
 project will be reformatted.
 
 ```js
-import test from "node:test";
-import { cdkTemplate, configureCdkSnapshots } from "@liflig/cdk-snapshot/node";
+import test from "node:test"
+import { cdkTemplate, configureCdkSnapshots } from "@liflig/cdk-snapshot/node"
 
-configureCdkSnapshots();
+configureCdkSnapshots()
 
 test("my stack", (t) => {
-  t.assert.snapshot(cdkTemplate(stack, { ignoreAssets: true }));
-});
+  t.assert.snapshot(cdkTemplate(stack, { ignoreAssets: true }))
+})
 ```
 
 Write snapshots with `node --test --test-update-snapshots`.
@@ -56,23 +56,23 @@ Write snapshots with `node --test --test-update-snapshots`.
 ### Bun
 
 ```js
-import { expect, test } from "bun:test";
-import "@liflig/cdk-snapshot/bun";
+import { expect, test } from "bun:test"
+import "@liflig/cdk-snapshot/bun"
 
 test("my stack", () => {
-  expect(stack).toMatchCdkSnapshot({ ignoreAssets: true });
-});
+  expect(stack).toMatchCdkSnapshot({ ignoreAssets: true })
+})
 ```
 
 ### Vitest
 
 ```js
-import { expect, test } from "vitest";
-import "@liflig/cdk-snapshot/vitest";
+import { expect, test } from "vitest"
+import "@liflig/cdk-snapshot/vitest"
 
 test("my stack", () => {
-  expect(stack).toMatchCdkSnapshot({ ignoreAssets: true });
-});
+  expect(stack).toMatchCdkSnapshot({ ignoreAssets: true })
+})
 ```
 
 `toMatchCdkSnapshot` does not work in concurrent tests: it snapshots through the global
@@ -80,21 +80,21 @@ test("my stack", () => {
 the template with the test's own `expect` instead, which records the same entry:
 
 ```js
-import { cdkTemplate } from "@liflig/cdk-snapshot/vitest";
+import { cdkTemplate } from "@liflig/cdk-snapshot/vitest"
 
 test.concurrent("my stack", ({ expect }) => {
-  expect(cdkTemplate(stack, { ignoreAssets: true })).toMatchSnapshot();
-});
+  expect(cdkTemplate(stack, { ignoreAssets: true })).toMatchSnapshot()
+})
 ```
 
 ### Jest
 
 ```js
-import "@liflig/cdk-snapshot/jest";
+import "@liflig/cdk-snapshot/jest"
 
 test("my stack", () => {
-  expect(stack).toMatchCdkSnapshot({ ignoreAssets: true });
-});
+  expect(stack).toMatchCdkSnapshot({ ignoreAssets: true })
+})
 ```
 
 Instead of importing it in each test file, the entry point can be listed once in
@@ -119,7 +119,7 @@ snapshot assertion for values the normalizations do not cover:
 ```js
 expect(stack).toMatchCdkSnapshot({
   propertyMatchers: { Resources: expect.any(Object) },
-});
+})
 ```
 
 Every entry point also exports `cdkTemplate(stack, options)`. Reach for it to assert on
@@ -134,19 +134,19 @@ correct the count.
 
 ## Options
 
-| Option | Type | Default | Effect |
-| --- | --- | --- | --- |
-| `ignoreAssets` | `boolean` | `false` | Replaces every `Code` property, every container definition's `Image` and the whole `Parameters` block with `Any<Object>` |
-| `ignoreAssetHashes` | `boolean` | `false` | Replaces the hash of every asset in the app with `<ASSET_HASH>`, wherever it appears |
-| `ignoreBootstrapVersion` | `boolean` | `true` | Drops the `BootstrapVersion` parameter and its check rule |
-| `ignoreCurrentVersion` | `boolean` | `false` | Masks the content hash on Lambda `CurrentVersion` logical IDs and every reference to them |
-| `ignoreMetadata` | `boolean` | `false` | Drops template and resource `Metadata` |
-| `ignoreTags` | `boolean` | `false` | Drops `Tags` from resource properties |
-| `ignorePipelineAssets` | `boolean` | `false` | Masks asset paths, IDs and destination suffixes in CDK Pipelines `cdk-assets` commands |
-| `subsetResourceTypes` | `string[]` | keep all | Keeps only resources of these CloudFormation types |
-| `subsetResourceKeys` | `string[]` | keep all | Keeps only resources with these logical IDs |
-| `assetPlaceholder` | `unknown` | `anyObject` | Token substituted for asset-derived values |
-| `propertyMatchers` | `Record<string, unknown>` | none | Matchers forwarded to the runner's snapshot assertion; matcher only, `cdkTemplate` does not take it |
+| Option                   | Type                      | Default     | Effect                                                                                                                   |
+| ------------------------ | ------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `ignoreAssets`           | `boolean`                 | `false`     | Replaces every `Code` property, every container definition's `Image` and the whole `Parameters` block with `Any<Object>` |
+| `ignoreAssetHashes`      | `boolean`                 | `false`     | Replaces the hash of every asset in the app with `<ASSET_HASH>`, wherever it appears                                     |
+| `ignoreBootstrapVersion` | `boolean`                 | `true`      | Drops the `BootstrapVersion` parameter and its check rule                                                                |
+| `ignoreCurrentVersion`   | `boolean`                 | `false`     | Masks the content hash on Lambda `CurrentVersion` logical IDs and every reference to them                                |
+| `ignoreMetadata`         | `boolean`                 | `false`     | Drops template and resource `Metadata`                                                                                   |
+| `ignoreTags`             | `boolean`                 | `false`     | Drops `Tags` from resource properties                                                                                    |
+| `ignorePipelineAssets`   | `boolean`                 | `false`     | Masks asset paths, IDs and destination suffixes in CDK Pipelines `cdk-assets` commands                                   |
+| `subsetResourceTypes`    | `string[]`                | keep all    | Keeps only resources of these CloudFormation types                                                                       |
+| `subsetResourceKeys`     | `string[]`                | keep all    | Keeps only resources with these logical IDs                                                                              |
+| `assetPlaceholder`       | `unknown`                 | `anyObject` | Token substituted for asset-derived values                                                                               |
+| `propertyMatchers`       | `Record<string, unknown>` | none        | Matchers forwarded to the runner's snapshot assertion; matcher only, `cdkTemplate` does not take it                      |
 
 `subsetResourceTypes` and `subsetResourceKeys` intersect: given both, a resource is kept
 only if it matches both.
@@ -205,13 +205,13 @@ format that runner already produces.
 Regenerate the snapshots with the new runner. The templates they record stay the same; the
 diff is limited to how each runner lays out the file around them:
 
-| | Jest | Vitest | node:test | Bun |
-| --- | --- | --- | --- | --- |
-| Header | Jest's, and files without it are rejected | Vitest's | none | Bun's |
-| Name of a test inside `describe` | `suite test 1` | `suite > test 1` | `suite > test 1` | `suite test 1` |
-| Entry order | sorted | sorted | sorted | test order |
-| Single-line snapshot, such as `{}` | inline | inline | on a line of its own | inline |
-| Multi-line string inside a template | starts on its key's line | starts on its key's line | starts on its key's line | string and the comma after it on lines of their own |
+|                                     | Jest                                      | Vitest                   | node:test                | Bun                                                 |
+| ----------------------------------- | ----------------------------------------- | ------------------------ | ------------------------ | --------------------------------------------------- |
+| Header                              | Jest's, and files without it are rejected | Vitest's                 | none                     | Bun's                                               |
+| Name of a test inside `describe`    | `suite test 1`                            | `suite > test 1`         | `suite > test 1`         | `suite test 1`                                      |
+| Entry order                         | sorted                                    | sorted                   | sorted                   | test order                                          |
+| Single-line snapshot, such as `{}`  | inline                                    | inline                   | on a line of its own     | inline                                              |
+| Multi-line string inside a template | starts on its key's line                  | starts on its key's line | starts on its key's line | string and the comma after it on lines of their own |
 
 Entry order does not affect matching, but it makes a regeneration diff look larger than it
 is: two similar snapshots trading places reads as values changing.
